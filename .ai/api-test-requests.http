@@ -1,0 +1,102 @@
+###
+# 10x Cards - API Test Requests
+# 
+# Use this file with REST Client extension for VS Code
+# https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+#
+# Or use with IntelliJ IDEA HTTP Client
+###
+
+@baseUrl = http://localhost:4321
+@contentType = application/json
+
+###
+# Test 1: Valid generation request (minimum length)
+POST {{baseUrl}}/api/generations
+Content-Type: {{contentType}}
+
+{
+  "source_text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur?"
+}
+
+###
+# Test 2: Valid generation request (React content)
+POST {{baseUrl}}/api/generations
+Content-Type: {{contentType}}
+
+{
+  "source_text": "React is a JavaScript library for building user interfaces. It was developed by Facebook and is now maintained by Meta and a community of individual developers. React allows developers to create reusable UI components and manage the state of their applications efficiently. The library uses a virtual DOM to optimize rendering performance, which means that instead of updating the entire page, React only updates the parts that have changed. This approach significantly improves the speed and efficiency of web applications. React components can be either functional or class-based, with modern React development heavily favoring functional components combined with Hooks. Hooks, introduced in React 16.8, allow developers to use state and other React features without writing a class. The most commonly used Hooks are useState for managing component state and useEffect for handling side effects like data fetching or subscriptions. React's component-based architecture promotes code reusability and maintainability, making it easier to build and scale complex applications. The library also supports server-side rendering through Next.js and other frameworks, which can improve initial page load times and SEO performance."
+}
+
+###
+# Test 3: Invalid request - text too short
+POST {{baseUrl}}/api/generations
+Content-Type: {{contentType}}
+
+{
+  "source_text": "This text is too short"
+}
+
+###
+# Test 4: Invalid request - missing source_text
+POST {{baseUrl}}/api/generations
+Content-Type: {{contentType}}
+
+{
+  "invalid_field": "value"
+}
+
+###
+# Test 5: Invalid request - empty source_text
+POST {{baseUrl}}/api/generations
+Content-Type: {{contentType}}
+
+{
+  "source_text": ""
+}
+
+###
+# Test 6: Invalid request - only whitespace
+POST {{baseUrl}}/api/generations
+Content-Type: {{contentType}}
+
+{
+  "source_text": "     "
+}
+
+###
+# Test 7: Valid generation request (TypeScript content)
+POST {{baseUrl}}/api/generations
+Content-Type: {{contentType}}
+
+{
+  "source_text": "TypeScript is a strongly typed programming language that builds on JavaScript, giving you better tooling at any scale. It was developed and is maintained by Microsoft. TypeScript adds optional static typing to JavaScript, which can help catch errors early in the development process through type checking. The type system in TypeScript is structural, meaning it focuses on the shape that values have rather than nominal typing found in languages like Java or C#. TypeScript code is transpiled to JavaScript, which means it can run anywhere JavaScript runs: in browsers, on Node.js, or in any JavaScript engine. One of the key benefits of TypeScript is enhanced IDE support, with features like autocomplete, type checking, and refactoring tools that make development more efficient. TypeScript supports modern JavaScript features including async/await, destructuring, and arrow functions, while also providing additional features like interfaces, enums, generics, and decorators. The language has gained massive adoption in the web development community, with many popular frameworks and libraries, including React, Vue, and Angular, providing excellent TypeScript support."
+}
+
+###
+# Test 8: Edge case - exactly 1000 characters
+POST {{baseUrl}}/api/generations
+Content-Type: {{contentType}}
+
+{
+  "source_text": "ABCDEFGHIJ KLMNOPQRST UVWXYZABCD EFGHIJKLMN OPQRSTUVWX YZABCDEFGH IJKLMNOPQR STUVWXYZAB CDEFGHIJKL MNOPQRSTUV WXYZABCDEF GHIJKLMNOP QRSTUVWXYZ ABCDEFGHIJ KLMNOPQRST UVWXYZABCD EFGHIJKLMN OPQRSTUVWX YZABCDEFGH IJKLMNOPQR STUVWXYZAB CDEFGHIJKL MNOPQRSTUV WXYZABCDEF GHIJKLMNOP QRSTUVWXYZ ABCDEFGHIJ KLMNOPQRST UVWXYZABCD EFGHIJKLMN OPQRSTUVWX YZABCDEFGH IJKLMNOPQR STUVWXYZAB CDEFGHIJKL MNOPQRSTUV WXYZABCDEF GHIJKLMNOP QRSTUVWXYZ ABCDEFGHIJ KLMNOPQRST UVWXYZABCD EFGHIJKLMN OPQRSTUVWX YZABCDEFGH IJKLMNOPQR STUVWXYZAB CDEFGHIJKL MNOPQRSTUV WXYZABCDEF GHIJKLMNOP QRSTUVWXYZ ABCDEFGHIJ KLMNOPQRST UVWXYZABCD EFGHIJKLMN OPQRSTUVWX YZABCDEFGH IJKLMNOPQR STUVWXYZAB CDEFGHIJKL MNOPQRSTUV WXYZABCDEF GHIJKLMNOP QRSTUVWXYZ ABCDEFGHIJ KLMNOPQRST UVWXYZABCD EFGHIJKLMN OPQRSTUVWX YZABCDEFGH IJKLMNOPQR STUVWXYZAB CDEFGHIJKL MNOPQRSTUV WXYZABCDEF GHIJKLMNOP QRSTUVWXYZ ABCDEFGHIJ KLMNOPQRST UVWXYZABCD EFGHIJKLMN OPQRSTUVWX YZABCDEFGH IJKLMNOPQR STUVWXYZAB CDEFGHIJKL MNOPQRSTUV WXYZABCDEF GHIJKLMNOP QRSTUVWXYZ ABCDEFGHIJ"
+}
+
+###
+# Test 9: Invalid JSON
+POST {{baseUrl}}/api/generations
+Content-Type: {{contentType}}
+
+{
+  "source_text": "Invalid JSON here
+}
+
+###
+# Test 10: Valid generation request (Python content)
+POST {{baseUrl}}/api/generations
+Content-Type: {{contentType}}
+
+{
+  "source_text": "Python is a high-level, interpreted programming language known for its simplicity and readability. Created by Guido van Rossum and first released in 1991, Python has become one of the most popular programming languages in the world. Its design philosophy emphasizes code readability with the use of significant whitespace and clear, expressive syntax. Python supports multiple programming paradigms, including procedural, object-oriented, and functional programming. The language features dynamic typing and automatic memory management, making it easier for developers to write and maintain code. Python's extensive standard library provides modules and packages for various tasks, from web development to scientific computing. The language has a large and active community that contributes to a rich ecosystem of third-party packages available through the Python Package Index (PyPI). Python is widely used in many domains, including web development with frameworks like Django and Flask, data science and machine learning with libraries like NumPy, Pandas, and TensorFlow, automation and scripting, and scientific computing. The language's versatility and ease of learning make it an excellent choice for beginners while still being powerful enough for experienced developers working on complex projects."
+}
+
