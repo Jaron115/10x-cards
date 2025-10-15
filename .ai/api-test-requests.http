@@ -100,3 +100,228 @@ Content-Type: {{contentType}}
   "source_text": "Python is a high-level, interpreted programming language known for its simplicity and readability. Created by Guido van Rossum and first released in 1991, Python has become one of the most popular programming languages in the world. Its design philosophy emphasizes code readability with the use of significant whitespace and clear, expressive syntax. Python supports multiple programming paradigms, including procedural, object-oriented, and functional programming. The language features dynamic typing and automatic memory management, making it easier for developers to write and maintain code. Python's extensive standard library provides modules and packages for various tasks, from web development to scientific computing. The language has a large and active community that contributes to a rich ecosystem of third-party packages available through the Python Package Index (PyPI). Python is widely used in many domains, including web development with frameworks like Django and Flask, data science and machine learning with libraries like NumPy, Pandas, and TensorFlow, automation and scripting, and scientific computing. The language's versatility and ease of learning make it an excellent choice for beginners while still being powerful enough for experienced developers working on complex projects."
 }
 
+################################################################################
+# FLASHCARDS API TESTS
+################################################################################
+
+###
+# Test 11: GET all flashcards (default pagination)
+GET {{baseUrl}}/api/flashcards
+
+###
+# Test 12: GET flashcards with pagination
+GET {{baseUrl}}/api/flashcards?page=1&limit=10
+
+###
+# Test 13: GET flashcards filtered by source
+GET {{baseUrl}}/api/flashcards?source=manual
+
+###
+# Test 14: GET flashcards with sorting
+GET {{baseUrl}}/api/flashcards?sort=updated_at&order=asc
+
+###
+# Test 15: GET flashcards - combined filters
+GET {{baseUrl}}/api/flashcards?page=1&limit=20&source=ai-full&sort=created_at&order=desc
+
+###
+# Test 16: GET flashcards - invalid page number
+GET {{baseUrl}}/api/flashcards?page=0
+
+###
+# Test 17: GET flashcards - limit too high
+GET {{baseUrl}}/api/flashcards?limit=150
+
+###
+# Test 18: POST create manual flashcard
+POST {{baseUrl}}/api/flashcards
+Content-Type: {{contentType}}
+
+{
+  "front": "Co to jest Astro?",
+  "back": "Framework do budowania szybkich stron internetowych z minimalnym JavaScriptem"
+}
+
+###
+# Test 19: POST create manual flashcard - front too long
+POST {{baseUrl}}/api/flashcards
+Content-Type: {{contentType}}
+
+{
+  "front": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+  "back": "Too long front text"
+}
+
+###
+# Test 20: POST create manual flashcard - missing fields
+POST {{baseUrl}}/api/flashcards
+Content-Type: {{contentType}}
+
+{
+  "front": "Only front provided"
+}
+
+###
+# Test 21: POST create manual flashcard - empty fields
+POST {{baseUrl}}/api/flashcards
+Content-Type: {{contentType}}
+
+{
+  "front": "",
+  "back": ""
+}
+
+###
+# Test 22: POST bulk create flashcards (use generation_id from previous test)
+POST {{baseUrl}}/api/flashcards/bulk
+Content-Type: {{contentType}}
+
+{
+  "generation_id": 1,
+  "flashcards": [
+    {
+      "front": "Co to jest React?",
+      "back": "Biblioteka JavaScript do budowania interfejsów użytkownika",
+      "source": "ai-full"
+    },
+    {
+      "front": "Co to jest JSX?",
+      "back": "Rozszerzenie składni JavaScript (edytowane)",
+      "source": "ai-edited"
+    }
+  ]
+}
+
+###
+# Test 23: POST bulk create - invalid generation_id
+POST {{baseUrl}}/api/flashcards/bulk
+Content-Type: {{contentType}}
+
+{
+  "generation_id": 99999,
+  "flashcards": [
+    {
+      "front": "Test",
+      "back": "Test",
+      "source": "ai-full"
+    }
+  ]
+}
+
+###
+# Test 24: POST bulk create - empty flashcards array
+POST {{baseUrl}}/api/flashcards/bulk
+Content-Type: {{contentType}}
+
+{
+  "generation_id": 1,
+  "flashcards": []
+}
+
+###
+# Test 25: POST bulk create - too many flashcards (>50)
+POST {{baseUrl}}/api/flashcards/bulk
+Content-Type: {{contentType}}
+
+{
+  "generation_id": 1,
+  "flashcards": [
+    {"front": "Q1", "back": "A1", "source": "ai-full"},
+    {"front": "Q2", "back": "A2", "source": "ai-full"},
+    {"front": "Q3", "back": "A3", "source": "ai-full"},
+    {"front": "Q4", "back": "A4", "source": "ai-full"},
+    {"front": "Q5", "back": "A5", "source": "ai-full"},
+    {"front": "Q6", "back": "A6", "source": "ai-full"},
+    {"front": "Q7", "back": "A7", "source": "ai-full"},
+    {"front": "Q8", "back": "A8", "source": "ai-full"},
+    {"front": "Q9", "back": "A9", "source": "ai-full"},
+    {"front": "Q10", "back": "A10", "source": "ai-full"},
+    {"front": "Q51", "back": "A51", "source": "ai-full"}
+  ]
+}
+
+###
+# Test 26: POST bulk create - invalid source (manual not allowed)
+POST {{baseUrl}}/api/flashcards/bulk
+Content-Type: {{contentType}}
+
+{
+  "generation_id": 1,
+  "flashcards": [
+    {
+      "front": "Test",
+      "back": "Test",
+      "source": "manual"
+    }
+  ]
+}
+
+###
+# Test 27: GET single flashcard by ID
+GET {{baseUrl}}/api/flashcards/1
+
+###
+# Test 28: GET single flashcard - non-existent ID
+GET {{baseUrl}}/api/flashcards/99999
+
+###
+# Test 29: GET single flashcard - invalid ID
+GET {{baseUrl}}/api/flashcards/invalid
+
+###
+# Test 30: PATCH update flashcard
+PATCH {{baseUrl}}/api/flashcards/1
+Content-Type: {{contentType}}
+
+{
+  "back": "Updated answer with more details"
+}
+
+###
+# Test 31: PATCH update flashcard - both fields
+PATCH {{baseUrl}}/api/flashcards/1
+Content-Type: {{contentType}}
+
+{
+  "front": "Updated question",
+  "back": "Updated answer"
+}
+
+###
+# Test 32: PATCH update flashcard - no fields provided
+PATCH {{baseUrl}}/api/flashcards/1
+Content-Type: {{contentType}}
+
+{
+}
+
+###
+# Test 33: PATCH update flashcard - non-existent ID
+PATCH {{baseUrl}}/api/flashcards/99999
+Content-Type: {{contentType}}
+
+{
+  "back": "Updated"
+}
+
+###
+# Test 34: PATCH update flashcard - field too long
+PATCH {{baseUrl}}/api/flashcards/1
+Content-Type: {{contentType}}
+
+{
+  "front": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
+}
+
+###
+# Test 35: DELETE flashcard
+DELETE {{baseUrl}}/api/flashcards/1
+
+###
+# Test 36: DELETE flashcard - non-existent ID
+DELETE {{baseUrl}}/api/flashcards/99999
+
+###
+# Test 37: DELETE flashcard - invalid ID
+DELETE {{baseUrl}}/api/flashcards/invalid
+
