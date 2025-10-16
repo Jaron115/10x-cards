@@ -1,0 +1,51 @@
+###
+# OpenRouter Integration Test
+# Use this to test the fixed implementation
+###
+
+@baseUrl = http://localhost:4321
+@contentType = application/json
+
+###
+# Test 1: Generation with React content (should work now)
+POST {{baseUrl}}/api/generations
+Content-Type: {{contentType}}
+
+{
+  "source_text": "React is a JavaScript library for building user interfaces. It was developed by Facebook and is now maintained by Meta and a community of individual developers. React allows developers to create reusable UI components and manage the state of their applications efficiently. The library uses a virtual DOM to optimize rendering performance, which means that instead of updating the entire page, React only updates the parts that have changed. This approach significantly improves the speed and efficiency of web applications. React components can be either functional or class-based, with modern React development heavily favoring functional components combined with Hooks. Hooks, introduced in React 16.8, allow developers to use state and other React features without writing a class. The most commonly used Hooks are useState for managing component state and useEffect for handling side effects like data fetching or subscriptions. React's component-based architecture promotes code reusability and maintainability, making it easier to build and scale complex applications. The library also supports server-side rendering through Next.js and other frameworks, which can improve initial page load times and SEO performance."
+}
+
+###
+# Test 2: Generation with TypeScript content
+POST {{baseUrl}}/api/generations
+Content-Type: {{contentType}}
+
+{
+  "source_text": "TypeScript is a strongly typed programming language that builds on JavaScript, giving you better tooling at any scale. It was developed and is maintained by Microsoft. TypeScript adds optional static typing to JavaScript, which can help catch errors early in the development process through type checking. The type system in TypeScript is structural, meaning it focuses on the shape that values have rather than nominal typing found in languages like Java or C#. TypeScript code is transpiled to JavaScript, which means it can run anywhere JavaScript runs: in browsers, on Node.js, or in any JavaScript engine. One of the key benefits of TypeScript is enhanced IDE support, with features like autocomplete, type checking, and refactoring tools that make development more efficient. TypeScript supports modern JavaScript features including async/await, destructuring, and arrow functions, while also providing additional features like interfaces, enums, generics, and decorators. The language has gained massive adoption in the web development community, with many popular frameworks and libraries, including React, Vue, and Angular, providing excellent TypeScript support."
+}
+
+###
+# Expected Success Response:
+# {
+#   "success": true,
+#   "data": {
+#     "generation_id": 1,
+#     "model": "openai/gpt-4o-mini",
+#     "duration_ms": 2500,
+#     "generated_count": 5,
+#     "flashcards_proposals": [
+#       {
+#         "front": "What is React?",
+#         "back": "A JavaScript library for building user interfaces",
+#         "source": "ai-full"
+#       }
+#     ]
+#   }
+# }
+
+###
+# If you still get errors, check:
+# 1. Server console logs for "Parsing AI response:" and error details
+# 2. OpenRouter API key is valid
+# 3. Try alternative models (see openrouter-debugging-guide.md)
+

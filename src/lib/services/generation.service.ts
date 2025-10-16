@@ -6,6 +6,8 @@
 import type { SupabaseClient } from "../../db/supabase.client.ts";
 import type { FlashcardProposalDTO, InsertGenerationData, InsertGenerationErrorLogData } from "../../types.ts";
 import { calculateMD5 } from "../utils/hash.ts";
+import { OpenRouterClient } from "./openrouter.service.ts";
+import { FLASHCARD_GENERATION_SYSTEM_PROMPT, FlashcardProposalsSchema } from "./openrouter.types.ts";
 
 /**
  * Result of AI generation
@@ -35,21 +37,14 @@ export class AIServiceError extends Error {
  * Provides methods for AI-powered flashcard generation and database operations
  */
 export class GenerationService {
-  private readonly API_URL = "https://openrouter.ai/api/v1/chat/completions";
-  private readonly TIMEOUT_MS = 60000; // 60 seconds
-  private readonly USE_MOCK = true; // Set to false in production to use real AI API
+  private readonly USE_MOCK: boolean;
+  private readonly TIMEOUT_MS: number;
 
-  private readonly SYSTEM_PROMPT = `You are a flashcard generation expert. Generate 5-8 high-quality flashcards from the provided text.
-Each flashcard should:
-- Have a clear, concise question on the front
-- Have a comprehensive answer on the back
-- Cover important concepts from the text
-- Be useful for learning and retention
-
-Return ONLY valid JSON in this exact format (no additional text):
-[{"front": "question text", "back": "answer text"}]`;
-
-  constructor(private readonly supabase: SupabaseClient) {}
+  constructor(private readonly supabase: SupabaseClient) {
+    // Read configuration from environment
+    this.USE_MOCK = import.meta.env.OPENROUTER_USE_MOCK === "true";
+    this.TIMEOUT_MS = parseInt(import.meta.env.OPENROUTER_TIMEOUT_MS || "60000", 10);
+  }
 
   /**
    * Generate flashcard proposals from source text using AI
@@ -68,42 +63,45 @@ Return ONLY valid JSON in this exact format (no additional text):
     }
 
     try {
-      const response = await fetch(this.API_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${api_key}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      const client = new OpenRouterClient(api_key, undefined, this.TIMEOUT_MS);
+
+      // Enhanced system prompt with explicit JSON format instructions
+      const enhancedSystemPrompt = `${FLASHCARD_GENERATION_SYSTEM_PROMPT}
+
+IMPORTANT: You MUST respond with valid JSON in this exact format:
+{
+  "flashcards": [
+    {"front": "question text", "back": "answer text"},
+    {"front": "question text", "back": "answer text"}
+  ]
+}
+
+Generate between 5 and 8 flashcards. Do not include any text before or after the JSON.`;
+
+      const { raw, parsed } = await client.chatComplete(
+        [
+          { role: "system", content: enhancedSystemPrompt },
+          { role: "user", content: source_text },
+        ],
+        {
           model,
-          messages: [
-            {
-              role: "system",
-              content: this.SYSTEM_PROMPT,
-            },
-            {
-              role: "user",
-              content: source_text,
-            },
-          ],
+          // Note: Some models via OpenRouter don't support response_format with json_schema
+          // We'll rely on prompt engineering instead
           temperature: 0.7,
+          top_p: 0.95,
           max_tokens: 2000,
-        }),
-        signal: AbortSignal.timeout(this.TIMEOUT_MS),
-      });
+        }
+      );
 
-      if (!response.ok) {
-        const error_text = await response.text();
-        throw new AIServiceError("AI service returned an error", response.status.toString(), error_text);
-      }
-
-      const data = await response.json();
-      const flashcards_proposals = this.parseAIResponse(data);
+      const flashcards_proposals = this.parseAIResponse(parsed);
       const duration_ms = Math.round(Date.now() - start_time);
+
+      // Extract model from response if available
+      const response_model = (raw as { model?: string })?.model || model;
 
       return {
         flashcards_proposals,
-        model: data.model || model,
+        model: response_model,
         duration_ms,
       };
     } catch (error) {
@@ -112,11 +110,22 @@ Return ONLY valid JSON in this exact format (no additional text):
       }
 
       if (error instanceof Error) {
-        if (error.name === "AbortError" || error.name === "TimeoutError") {
+        // Check for timeout errors
+        if (error.message.includes("timed out")) {
           throw new AIServiceError("AI service request timed out", "TIMEOUT_ERROR", error.message);
         }
 
-        throw new AIServiceError("Failed to connect to AI service", "NETWORK_ERROR", error.message);
+        // Check for network errors
+        if (error.name === "TypeError" && error.message.includes("fetch")) {
+          throw new AIServiceError("Failed to connect to AI service", "NETWORK_ERROR", error.message);
+        }
+
+        // OpenRouter API errors
+        if (error.message.includes("OpenRouter API error")) {
+          throw new AIServiceError("AI service returned an error", "AI_SERVICE_ERROR", error.message);
+        }
+
+        throw new AIServiceError("Failed to generate flashcards", "UNKNOWN_ERROR", error.message);
       }
 
       throw new AIServiceError("Unknown error occurred", "UNKNOWN_ERROR", String(error));
@@ -125,52 +134,80 @@ Return ONLY valid JSON in this exact format (no additional text):
 
   /**
    * Parse AI response and extract flashcard proposals
-   * @param response - Raw response from AI API
+   * @param parsed - Parsed response from OpenRouter client
    * @returns Array of flashcard proposals
    * @throws AIServiceError if response format is invalid
    */
-  private parseAIResponse(response: unknown): FlashcardProposalDTO[] {
-    try {
-      // Validate response structure
-      if (!response || typeof response !== "object") {
-        throw new Error("Invalid response format");
-      }
-
-      const data = response as { choices?: { message?: { content?: string } }[] };
-      const content = data.choices?.[0]?.message?.content;
-
-      if (!content) {
-        throw new Error("No content in AI response");
-      }
-
-      // Parse JSON content
-      const parsed = JSON.parse(content) as { front: string; back: string }[];
-
-      if (!Array.isArray(parsed) || parsed.length === 0) {
-        throw new Error("AI response is not a valid array");
-      }
-
-      // Validate and map to FlashcardProposalDTO
-      const proposals: FlashcardProposalDTO[] = parsed.map((item, index) => {
-        if (!item.front || !item.back) {
-          throw new Error(`Invalid flashcard at index ${index}`);
-        }
-
-        return {
-          front: item.front.trim(),
-          back: item.back.trim(),
-          source: "ai-full",
-        };
-      });
-
-      return proposals;
-    } catch (error) {
-      throw new AIServiceError(
-        "Failed to parse AI response",
-        "PARSE_ERROR",
-        error instanceof Error ? error.message : String(error)
-      );
+  private parseAIResponse(parsed: unknown): FlashcardProposalDTO[] {
+    if (!parsed) {
+      throw new AIServiceError("No parsed content in AI response", "PARSE_ERROR", "Response was empty or invalid");
     }
+
+    try {
+      // Extract flashcards array from the response
+      let flashcardsArray: unknown;
+
+      // Log parsed response for debugging
+      // eslint-disable-next-line no-console
+      console.log("Parsing AI response:", JSON.stringify(parsed).substring(0, 500));
+
+      if (typeof parsed === "object" && parsed !== null && "flashcards" in parsed) {
+        flashcardsArray = (parsed as { flashcards: unknown }).flashcards;
+      } else if (Array.isArray(parsed)) {
+        // Fallback: if response is already an array
+        flashcardsArray = parsed;
+      } else if (typeof parsed === "string") {
+        // Try to parse string as JSON
+        try {
+          const jsonParsed = JSON.parse(parsed);
+          if (typeof jsonParsed === "object" && jsonParsed !== null && "flashcards" in jsonParsed) {
+            flashcardsArray = jsonParsed.flashcards;
+          } else if (Array.isArray(jsonParsed)) {
+            flashcardsArray = jsonParsed;
+          } else {
+            throw new Error("Parsed string does not contain valid structure");
+          }
+        } catch (parseError) {
+          throw new Error(
+            `Failed to parse string response: ${parseError instanceof Error ? parseError.message : String(parseError)}`
+          );
+        }
+      } else {
+        throw new Error(`Response does not contain flashcards array. Type: ${typeof parsed}`);
+      }
+
+      if (!flashcardsArray) {
+        throw new Error("Flashcards array is null or undefined");
+      }
+
+      // Validate with Zod schema
+      const validated = FlashcardProposalsSchema.parse(flashcardsArray);
+
+      // Map to FlashcardProposalDTO
+      return this.toFlashcardProposals(validated);
+    } catch (error) {
+      // Log full error for debugging
+      // eslint-disable-next-line no-console
+      console.error("AI Response parsing failed:", error);
+
+      if (error instanceof Error) {
+        throw new AIServiceError("Failed to validate AI response", "VALIDATION_ERROR", error.message);
+      }
+      throw new AIServiceError("Failed to parse AI response", "PARSE_ERROR", String(error));
+    }
+  }
+
+  /**
+   * Convert validated flashcards to FlashcardProposalDTO array
+   * @param validated - Validated flashcard proposals
+   * @returns Array of FlashcardProposalDTO
+   */
+  private toFlashcardProposals(validated: { front: string; back: string }[]): FlashcardProposalDTO[] {
+    return validated.map((item) => ({
+      front: item.front.trim(),
+      back: item.back.trim(),
+      source: "ai-full" as const,
+    }));
   }
 
   /**
@@ -277,10 +314,12 @@ Return ONLY valid JSON in this exact format (no additional text):
       const { error: db_error } = await this.supabase.from("generation_error_logs").insert(error_log);
 
       if (db_error) {
+        // eslint-disable-next-line no-console
         console.error("Failed to log generation error:", db_error);
       }
     } catch (err) {
       // Don't throw - logging errors should not break the flow
+      // eslint-disable-next-line no-console
       console.error("Failed to log generation error:", err);
     }
   }

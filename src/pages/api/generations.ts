@@ -14,12 +14,6 @@ import { RateLimitService } from "../../lib/services/rateLimit.service.ts";
 import { GenerationService, AIServiceError } from "../../lib/services/generation.service.ts";
 import { GenerateFlashcardsSchema } from "../../lib/validation/generation.schemas.ts";
 
-// Development configuration
-const DEV_CONFIG = {
-  SKIP_RATE_LIMIT: true, // Set to false in production
-  USE_MOCK_AI: true, // Set to false to use real AI API (requires OPENROUTER_API_KEY)
-} as const;
-
 // Disable prerendering for this API route
 export const prerender = false;
 
@@ -75,8 +69,14 @@ export async function POST({ locals, request }: APIContext): Promise<Response> {
 
     const { source_text } = validatedData;
 
-    // Check rate limit (skip in development)
-    if (!DEV_CONFIG.SKIP_RATE_LIMIT) {
+    // Get environment variables
+    const api_key = import.meta.env.OPENROUTER_API_KEY || "";
+    const model = import.meta.env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
+    const use_mock = import.meta.env.OPENROUTER_USE_MOCK === "true";
+    const skip_rate_limit = import.meta.env.OPENROUTER_USE_MOCK === "true"; // Skip rate limit in mock mode
+
+    // Check rate limit (skip in development/mock mode)
+    if (!skip_rate_limit) {
       let rate_limit_result;
       try {
         rate_limit_result = await rate_limit_service.checkRateLimit(user_id);
@@ -90,12 +90,8 @@ export async function POST({ locals, request }: APIContext): Promise<Response> {
       }
     }
 
-    // Get environment variables
-    const api_key = import.meta.env.OPENROUTER_API_KEY || "";
-    const model = import.meta.env.OPENROUTER_MODEL || "openai/gpt-4";
-
     // Only check for API key if we're not using mock data
-    if (!DEV_CONFIG.USE_MOCK_AI && !api_key) {
+    if (!use_mock && !api_key) {
       console.error("OPENROUTER_API_KEY is not configured");
       return createErrorResponse(500, "INTERNAL_ERROR", "Service is not properly configured. Please contact support.");
     }
