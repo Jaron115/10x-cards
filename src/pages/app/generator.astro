@@ -1,0 +1,12 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { GeneratorView } from "@/components/generator/GeneratorView";
+
+export const prerender = false;
+
+// Page is protected by middleware
+---
+
+<Layout title="Generator AI - 10x Cards">
+  <GeneratorView client:load />
+</Layout>

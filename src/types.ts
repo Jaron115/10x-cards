@@ -273,3 +273,20 @@ export type UpdateGenerationData = TablesUpdate<"generations">;
  * Derived from database Insert type
  */
 export type InsertGenerationErrorLogData = TablesInsert<"generation_error_logs">;
+
+// ============================================================================
+// Frontend View Models
+// ============================================================================
+
+/**
+ * Flashcard proposal view model for the Generator UI
+ * Extends FlashcardProposalDTO with client-side state management
+ */
+export interface FlashcardProposalViewModel extends Omit<FlashcardProposalDTO, "source"> {
+  /** Unique client-side identifier (e.g., UUID) */
+  id: string;
+  /** Proposal status: pending, approved, or rejected */
+  status: "pending" | "approved" | "rejected";
+  /** Source of the flashcard, updated after editing */
+  source: "ai-full" | "ai-edited";
+}
