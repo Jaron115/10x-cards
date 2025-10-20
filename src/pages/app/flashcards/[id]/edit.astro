@@ -1,0 +1,19 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { FlashcardFormView } from "@/components/flashcards/FlashcardFormView";
+
+export const prerender = false;
+// Page is protected by middleware - user must be authenticated
+
+const { id } = Astro.params;
+const flashcardId = parseInt(id || "0");
+
+// Validate that id is a valid number
+if (!id || isNaN(flashcardId) || flashcardId <= 0) {
+  return Astro.redirect("/app/flashcards");
+}
+---
+
+<Layout title="Edytuj fiszkę - 10x Cards">
+  <FlashcardFormView client:load mode="edit" flashcardId={flashcardId} />
+</Layout>

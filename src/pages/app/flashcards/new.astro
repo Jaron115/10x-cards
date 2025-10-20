@@ -1,0 +1,11 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { FlashcardFormView } from "@/components/flashcards/FlashcardFormView";
+
+export const prerender = false;
+// Page is protected by middleware - user must be authenticated
+---
+
+<Layout title="Dodaj fiszkę - 10x Cards">
+  <FlashcardFormView client:load mode="create" />
+</Layout>

@@ -1,0 +1,11 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { FlashcardListView } from "@/components/flashcards/FlashcardListView";
+
+export const prerender = false;
+// Page is protected by middleware - user must be authenticated
+---
+
+<Layout title="Moje fiszki - 10x Cards">
+  <FlashcardListView client:load />
+</Layout>

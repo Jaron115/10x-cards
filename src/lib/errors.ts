@@ -49,4 +49,3 @@ export class ForbiddenError extends Error {
     this.name = "ForbiddenError";
   }
 }
-

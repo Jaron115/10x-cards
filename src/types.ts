@@ -290,3 +290,101 @@ export interface FlashcardProposalViewModel extends Omit<FlashcardProposalDTO, "
   /** Source of the flashcard, updated after editing */
   source: "ai-full" | "ai-edited";
 }
+
+/**
+ * View Model for flashcard list view
+ * Represents the complete state of the list view with flashcards, pagination, and controls
+ */
+export interface FlashcardListViewModel {
+  /** List of flashcards to display */
+  flashcards: FlashcardDTO[];
+  /** Pagination metadata */
+  pagination: PaginationDTO;
+  /** Current query parameters (filters, sorting, page) */
+  queryParams: GetFlashcardsQueryDTO;
+  /** Data loading state */
+  isLoading: boolean;
+  /** Error message (if any) */
+  error: string | null;
+  /** Flashcard pending deletion (for confirmation dialog) */
+  flashcardToDelete: FlashcardDTO | null;
+}
+
+/**
+ * View Model for flashcard form (create/edit)
+ * Represents the form state with data, errors, and operation status
+ */
+export interface FlashcardFormViewModel {
+  /** Form mode */
+  mode: "create" | "edit";
+  /** Flashcard data (populated in edit mode, empty in create mode) */
+  flashcard: {
+    front: string;
+    back: string;
+  };
+  /** Save operation loading state */
+  isLoading: boolean;
+  /** General error (e.g., network error) */
+  error: string | null;
+  /** Validation errors for specific fields */
+  validationErrors: {
+    front?: string;
+    back?: string;
+  };
+  /** Whether the form is valid (can be saved) */
+  isValid: boolean;
+}
+
+/**
+ * Type for flashcard-related actions
+ * Used by useFlashcardMutations hook
+ */
+export interface FlashcardMutations {
+  createFlashcard: (data: CreateFlashcardCommand) => Promise<FlashcardDTO>;
+  updateFlashcard: (id: number, data: UpdateFlashcardCommand) => Promise<FlashcardDTO>;
+  deleteFlashcard: (id: number) => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
+}
+
+/**
+ * Type for date formatting function
+ */
+export type DateFormatter = (date: string) => string;
+
+/**
+ * Labels for flashcard sources (for UI display)
+ */
+export const FLASHCARD_SOURCE_LABELS: Record<FlashcardSource, string> = {
+  manual: "Ręczna",
+  "ai-full": "AI",
+  "ai-edited": "AI (edytowana)",
+};
+
+/**
+ * Options for source filter
+ */
+export interface SourceFilterOption {
+  value: FlashcardSource | "all";
+  label: string;
+}
+
+export const SOURCE_FILTER_OPTIONS: SourceFilterOption[] = [
+  { value: "all", label: "Wszystkie" },
+  { value: "manual", label: "Ręczne" },
+  { value: "ai-full", label: "AI" },
+  { value: "ai-edited", label: "AI (edytowane)" },
+];
+
+/**
+ * Options for sorting
+ */
+export interface SortOption {
+  field: "created_at" | "updated_at";
+  label: string;
+}
+
+export const SORT_OPTIONS: SortOption[] = [
+  { field: "created_at", label: "Data utworzenia" },
+  { field: "updated_at", label: "Data modyfikacji" },
+];
