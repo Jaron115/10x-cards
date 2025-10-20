@@ -1,0 +1,20 @@
+---
+import AppLayout from "@/layouts/AppLayout.astro";
+import { AccountView } from "@/components/account/AccountView";
+import type { UserAccountDTO } from "@/types";
+import { DEFAULT_USER_ID } from "@/db/supabase.client";
+
+// Development: Using default user ID
+// TODO: After middleware is updated to include user authentication, get user from:
+// const user = Astro.locals.user;
+
+const user: UserAccountDTO = {
+  id: DEFAULT_USER_ID,
+  email: "test@example.com",
+  created_at: "2024-10-01T00:00:00.000Z",
+};
+---
+
+<AppLayout title="Moje konto - 10x Cards">
+  <AccountView user={user} client:load />
+</AppLayout>

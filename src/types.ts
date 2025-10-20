@@ -388,3 +388,102 @@ export const SORT_OPTIONS: SortOption[] = [
   { field: "created_at", label: "Data utworzenia" },
   { field: "updated_at", label: "Data modyfikacji" },
 ];
+
+// ============================================================================
+// User Account Types
+// ============================================================================
+
+/**
+ * User account DTO - podstawowe informacje o koncie użytkownika
+ * Używane w widoku konta
+ */
+export interface UserAccountDTO {
+  id: string; // UUID użytkownika z Supabase Auth
+  email: string;
+  created_at: string; // ISO 8601
+}
+
+/**
+ * Response dla DELETE /api/user/account
+ */
+export interface DeleteAccountResponseDTO {
+  success: true;
+  message: string;
+}
+
+// ============================================================================
+// Component Props Types
+// ============================================================================
+
+/**
+ * Props for AppLayout (Astro)
+ */
+export interface AppLayoutProps {
+  title?: string;
+}
+
+/**
+ * Props for Sidebar (React)
+ */
+export interface SidebarProps {
+  currentPath: string;
+  userEmail?: string;
+}
+
+/**
+ * Props for SidebarNav (React)
+ */
+export interface SidebarNavProps {
+  currentPath: string;
+}
+
+/**
+ * Navigation item definition
+ */
+export interface NavItem {
+  label: string;
+  href: string;
+  icon?: React.ReactNode;
+}
+
+/**
+ * Props for SidebarNavItem (React)
+ */
+export interface SidebarNavItemProps {
+  label: string;
+  href: string;
+  icon?: React.ReactNode;
+  isActive: boolean;
+}
+
+/**
+ * Props for AccountView (React)
+ */
+export interface AccountViewProps {
+  user: UserAccountDTO;
+}
+
+/**
+ * Props for AccountInfo (React)
+ */
+export interface AccountInfoProps {
+  user: UserAccountDTO;
+}
+
+/**
+ * Props for DeleteAccountDialog (React)
+ */
+export interface DeleteAccountDialogProps {
+  onDeleteSuccess: () => void;
+}
+
+/**
+ * Hook return type for useAccount
+ */
+export interface UseAccountReturn {
+  user: UserAccountDTO | null;
+  isLoading: boolean;
+  error: string | null;
+  deleteAccount: () => Promise<void>;
+  logout: () => Promise<void>;
+}
