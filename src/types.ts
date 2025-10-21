@@ -487,3 +487,41 @@ export interface UseAccountReturn {
   deleteAccount: () => Promise<void>;
   logout: () => Promise<void>;
 }
+
+// ============================================================================
+// Auth Form Types (UI-only, no API integration yet)
+// ============================================================================
+
+/**
+ * Dane formularza logowania
+ */
+export interface LoginFormData {
+  email: string;
+  password: string;
+}
+
+/**
+ * Dane formularza rejestracji
+ */
+export interface RegisterFormData {
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+/**
+ * Błędy walidacji formularza logowania
+ */
+export interface LoginFormErrors {
+  email?: string;
+  password?: string;
+}
+
+/**
+ * Błędy walidacji formularza rejestracji
+ */
+export interface RegisterFormErrors {
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+}

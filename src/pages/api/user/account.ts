@@ -79,7 +79,7 @@ export async function DELETE({ locals }: APIContext): Promise<Response> {
         "Content-Type": "application/json",
       },
     });
-  } catch () {
+  } catch {
     return createErrorResponse(500, "INTERNAL_ERROR", "An unexpected error occurred. Please try again later.");
   }
 }
