@@ -2,16 +2,20 @@
 import AppLayout from "@/layouts/AppLayout.astro";
 import { AccountView } from "@/components/account/AccountView";
 import type { UserAccountDTO } from "@/types";
-import { DEFAULT_USER_ID } from "@/db/supabase.client";
 
-// Development: Using default user ID
-// TODO: After middleware is updated to include user authentication, get user from:
-// const user = Astro.locals.user;
+// User is already authenticated by AppLayout (requireAuth guard)
+// AppLayout uses requireAuth which ensures user exists
+const authUser = Astro.locals.user;
 
+if (!authUser || !authUser.email) {
+  throw new Error("User not authenticated or email missing");
+}
+
+// Map Supabase User to UserAccountDTO
 const user: UserAccountDTO = {
-  id: DEFAULT_USER_ID,
-  email: "test@example.com",
-  created_at: "2024-10-01T00:00:00.000Z",
+  id: authUser.id,
+  email: authUser.email,
+  created_at: authUser.created_at,
 };
 ---
 

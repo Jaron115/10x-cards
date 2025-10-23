@@ -58,10 +58,7 @@ export const validateRegisterPassword = (password: string): string | undefined =
  * @param password - Oryginalne hasło
  * @returns Komunikat błędu lub undefined jeśli hasła są zgodne
  */
-export const validateConfirmPassword = (
-  confirmPassword: string,
-  password: string
-): string | undefined => {
+export const validateConfirmPassword = (confirmPassword: string, password: string): string | undefined => {
   if (confirmPassword === "") {
     return "Potwierdzenie hasła jest wymagane";
   }
@@ -72,4 +69,3 @@ export const validateConfirmPassword = (
 
   return undefined;
 };
-

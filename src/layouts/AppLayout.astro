@@ -1,6 +1,7 @@
 ---
 import Layout from "./Layout.astro";
 import { Sidebar } from "../components/navigation/Sidebar";
+import { requireAuth } from "@/lib/auth/guards";
 
 interface Props {
   title?: string;
@@ -8,22 +9,17 @@ interface Props {
 
 const { title = "10x Cards" } = Astro.props;
 
-// Development: Using default user ID
-// TODO: After middleware is updated to include user authentication, use:
-// const user = Astro.locals.user;
-// if (!user) {
-//   return Astro.redirect("/");
-// }
+// Require authentication - redirect to login if not authenticated
+const user = requireAuth(Astro);
 
-// For now, we use a mock user
-const mockUserEmail = "test@example.com";
+const userEmail = user.email || undefined;
 const currentPath = Astro.url.pathname;
 ---
 
 <Layout title={title}>
   <div class="min-h-screen flex bg-gray-50">
     <!-- Sidebar - hidden on mobile, visible on lg+ -->
-    <Sidebar currentPath={currentPath} userEmail={mockUserEmail} client:load />
+    <Sidebar currentPath={currentPath} userEmail={userEmail} client:load />
 
     <!-- Main content - full width on mobile, with sidebar space on lg+ -->
     <main class="flex-1 overflow-y-auto w-full">

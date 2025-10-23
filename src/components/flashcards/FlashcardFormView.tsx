@@ -1,4 +1,3 @@
-import { Toaster } from "@/components/ui/sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { useFlashcardForm } from "./useFlashcardForm";
@@ -33,7 +32,6 @@ export const FlashcardFormView = ({ mode, flashcardId }: FlashcardFormViewProps)
   if (mode === "edit" && isLoading && !front && !back) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl">
-        <Toaster />
         <Card>
           <CardHeader>
             <Skeleton className="h-8 w-48" />
@@ -56,8 +54,6 @@ export const FlashcardFormView = ({ mode, flashcardId }: FlashcardFormViewProps)
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <Toaster />
-
       {/* Error message */}
       {error && (
         <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg mb-6">

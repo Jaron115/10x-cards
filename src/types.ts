@@ -489,7 +489,7 @@ export interface UseAccountReturn {
 }
 
 // ============================================================================
-// Auth Form Types (UI-only, no API integration yet)
+// Auth Form Types
 // ============================================================================
 
 /**
@@ -524,4 +524,62 @@ export interface RegisterFormErrors {
   email?: string;
   password?: string;
   confirmPassword?: string;
+}
+
+// ============================================================================
+// Auth API Types
+// ============================================================================
+
+/**
+ * Request body for user registration
+ */
+export interface RegisterRequest {
+  email: string;
+  password: string;
+}
+
+/**
+ * Request body for user login
+ */
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+/**
+ * Auth user data returned in API responses
+ */
+export interface AuthUserDTO {
+  id: string; // UUID
+  email: string;
+}
+
+/**
+ * Response for successful registration
+ */
+export interface RegisterResponseDTO {
+  user: AuthUserDTO;
+  message: string;
+}
+
+/**
+ * Response for successful login
+ */
+export interface LoginResponseDTO {
+  user: AuthUserDTO;
+}
+
+/**
+ * Response for GET /api/auth/me
+ */
+export interface GetCurrentUserResponseDTO {
+  user: AuthUserDTO;
+}
+
+/**
+ * Response for logout
+ */
+export interface LogoutResponseDTO {
+  success: true;
+  message: string;
 }

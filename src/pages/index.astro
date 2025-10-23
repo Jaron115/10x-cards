@@ -1,8 +1,15 @@
 ---
 import { AuthView } from "../components/auth/AuthView";
 import Layout from "../layouts/Layout.astro";
+import { requireGuest } from "@/lib/auth/guards";
+
+// Redirect to /app/generator if already logged in
+requireGuest(Astro);
+
+// Check if session expired (for showing message)
+const sessionExpired = Astro.locals.sessionExpired || false;
 ---
 
 <Layout title="Logowanie - 10x-cards">
-  <AuthView client:load />
+  <AuthView client:load sessionExpired={sessionExpired} />
 </Layout>

@@ -1,14 +1,27 @@
+import { useEffect } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoginForm } from "./LoginForm";
 import { RegisterForm } from "./RegisterForm";
 
+interface AuthViewProps {
+  sessionExpired?: boolean;
+}
+
 /**
  * Główny widok uwierzytelniania (logowanie i rejestracja)
  * Zawiera komponenty Card i Tabs z przełączaniem między formularzami
- * UWAGA: Wersja UI-only, bez integracji z API
+ * Obsługuje komunikat o wygasłej sesji
  */
-export function AuthView() {
+export function AuthView({ sessionExpired }: AuthViewProps) {
+  // Show session expired message if refresh token expired
+  useEffect(() => {
+    if (sessionExpired) {
+      toast.error("Twoja sesja wygasła, zaloguj się ponownie");
+    }
+  }, [sessionExpired]);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">

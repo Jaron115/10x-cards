@@ -4,12 +4,15 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { validateEmail, validateRegisterPassword, validateConfirmPassword } from "@/lib/validation/auth.validation";
+import { useAuth } from "./useAuth";
 
 /**
  * Formularz rejestracji z walidacją po stronie klienta
- * UWAGA: Wersja UI-only, bez integracji z API
+ * Zintegrowany z useAuth hook dla komunikacji z API
  */
 export function RegisterForm() {
+  const { register, isLoading } = useAuth();
+
   const [formData, setFormData] = useState<RegisterFormData>({
     email: "",
     password: "",
@@ -93,14 +96,18 @@ export function RegisterForm() {
   /**
    * Obsługa wysłania formularza
    */
-  const handleSubmit = (e: React.FormEvent): void => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
     const isValid = validateForm();
 
     if (isValid) {
-      // TODO: Add useAuth.register() call here when implementing API integration
-      // Formularz jest poprawny, gotowy do integracji z API
+      // Call register API (without confirmPassword)
+      await register({
+        email: formData.email,
+        password: formData.password,
+      });
+      // Note: Auto-redirect and toast handled by useAuth hook
     }
   };
 
@@ -183,8 +190,8 @@ export function RegisterForm() {
       </div>
 
       {/* Przycisk submit */}
-      <Button type="submit" className="w-full" disabled={!isFormValid()}>
-        Zarejestruj się
+      <Button type="submit" className="w-full" disabled={!isFormValid() || isLoading}>
+        {isLoading ? "Rejestrowanie..." : "Zarejestruj się"}
       </Button>
     </form>
   );

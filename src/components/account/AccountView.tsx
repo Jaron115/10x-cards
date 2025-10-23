@@ -1,7 +1,6 @@
 import { useAccount } from "./useAccount";
 import { AccountInfo } from "./AccountInfo";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
-import { Toaster } from "@/components/ui/sonner";
 import type { AccountViewProps } from "@/types";
 
 /**
@@ -46,8 +45,6 @@ export const AccountView = ({ user: initialUser }: AccountViewProps) => {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <Toaster />
-
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Moje konto</h1>

@@ -4,12 +4,15 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { validateEmail, validateLoginPassword } from "@/lib/validation/auth.validation";
+import { useAuth } from "./useAuth";
 
 /**
  * Formularz logowania z walidacją po stronie klienta
- * UWAGA: Wersja UI-only, bez integracji z API
+ * Zintegrowany z useAuth hook dla komunikacji z API
  */
 export function LoginForm() {
+  const { login, isLoading } = useAuth();
+
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     password: "",
@@ -79,14 +82,15 @@ export function LoginForm() {
   /**
    * Obsługa wysłania formularza
    */
-  const handleSubmit = (e: React.FormEvent): void => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
     const isValid = validateForm();
 
     if (isValid) {
-      // TODO: Add useAuth.login() call here when implementing API integration
-      // Formularz jest poprawny, gotowy do integracji z API
+      // Call login API
+      await login(formData);
+      // Note: Redirect and toast handled by useAuth hook
     }
   };
 
@@ -148,8 +152,8 @@ export function LoginForm() {
       </div>
 
       {/* Przycisk submit */}
-      <Button type="submit" className="w-full" disabled={!isFormValid()}>
-        Zaloguj się
+      <Button type="submit" className="w-full" disabled={!isFormValid() || isLoading}>
+        {isLoading ? "Logowanie..." : "Zaloguj się"}
       </Button>
     </form>
   );

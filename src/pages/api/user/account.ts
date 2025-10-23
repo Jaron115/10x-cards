@@ -10,8 +10,9 @@
  */
 
 import type { APIContext } from "astro";
-import type { ApiErrorDTO, DeleteAccountResponseDTO } from "../../../types.ts";
-import { DEFAULT_USER_ID } from "../../../db/supabase.client.ts";
+import type { DeleteAccountResponseDTO } from "../../../types.ts";
+import { createErrorResponse } from "../../../lib/errors.ts";
+import { supabaseAdmin } from "../../../db/supabase.admin.ts";
 
 // Disable prerendering for this API route
 export const prerender = false;
@@ -22,21 +23,20 @@ export const prerender = false;
  * - All flashcards
  * - All generations
  * - All generation error logs
- * - User account from Supabase Auth (in production)
+ * - User account from Supabase Auth
+ * - Session cookies
  */
-export async function DELETE({ locals }: APIContext): Promise<Response> {
+export async function DELETE({ locals, cookies }: APIContext): Promise<Response> {
   try {
     const supabase = locals.supabase;
 
     // Get authenticated user from locals (set by middleware)
-    // TODO: After middleware is updated to include user authentication, uncomment this:
-    // const user = locals.user;
-    // if (!user) {
-    //   return createErrorResponse(401, "UNAUTHORIZED", "Invalid or missing authentication token");
-    // }
+    const user = locals.user;
+    if (!user) {
+      return createErrorResponse(401, "UNAUTHORIZED", "Authentication required");
+    }
 
-    // Development: Using default user ID from database
-    const user_id = DEFAULT_USER_ID;
+    const user_id = user.id;
 
     // Delete all user data from database tables
     // Order matters: delete in reverse order of dependencies
@@ -62,10 +62,17 @@ export async function DELETE({ locals }: APIContext): Promise<Response> {
       return createErrorResponse(500, "INTERNAL_ERROR", "Failed to delete error logs data", errorLogsError.message);
     }
 
-    // TODO: In production with proper authentication:
-    // Delete user from Supabase Auth using admin API
-    // This requires server-side service role key (not exposed to client)
-    // const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(user_id);
+    // 4. Delete user from Supabase Auth using admin API
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(user_id);
+
+    if (authError) {
+      console.error("[API] Failed to delete user from Supabase Auth:", authError);
+      return createErrorResponse(500, "INTERNAL_ERROR", "Failed to delete user account", authError.message);
+    }
+
+    // 5. Clear session cookies (important - otherwise user appears still logged in)
+    cookies.delete("sb-access-token", { path: "/" });
+    cookies.delete("sb-refresh-token", { path: "/" });
 
     // Build successful response
     const response: DeleteAccountResponseDTO = {
@@ -79,33 +86,8 @@ export async function DELETE({ locals }: APIContext): Promise<Response> {
         "Content-Type": "application/json",
       },
     });
-  } catch {
+  } catch (error) {
+    console.error("[API] Delete account error:", error);
     return createErrorResponse(500, "INTERNAL_ERROR", "An unexpected error occurred. Please try again later.");
   }
-}
-
-/**
- * Helper function to create error responses
- */
-function createErrorResponse(
-  status: number,
-  code: ApiErrorDTO["error"]["code"],
-  message: string,
-  details?: unknown
-): Response {
-  const errorResponse: ApiErrorDTO = {
-    success: false,
-    error: {
-      code,
-      message,
-      ...(details !== undefined && { details }),
-    },
-  };
-
-  return new Response(JSON.stringify(errorResponse), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
 }

@@ -11,10 +11,9 @@
 
 import type { APIContext } from "astro";
 import { z } from "zod";
-import type { ApiErrorDTO, ApiResponseDTO, CreateFlashcardsBulkResponseDTO } from "../../../types.ts";
-import { DEFAULT_USER_ID } from "../../../db/supabase.client.ts";
+import type { ApiResponseDTO, CreateFlashcardsBulkResponseDTO } from "../../../types.ts";
+import { createErrorResponse, NotFoundError, ValidationError } from "../../../lib/errors.ts";
 import { FlashcardService } from "../../../lib/services/flashcard.service.ts";
-import { NotFoundError, ValidationError } from "../../../lib/errors.ts";
 import { CreateFlashcardsBulkSchema } from "../../../lib/validation/flashcard.schemas.ts";
 
 // Disable prerendering for this API route
@@ -31,14 +30,12 @@ export async function POST({ locals, request }: APIContext): Promise<Response> {
     const flashcard_service = new FlashcardService(supabase);
 
     // Get authenticated user from locals (set by middleware)
-    // TODO: After middleware is updated to include user, uncomment this:
-    // const user = locals.user;
-    // if (!user) {
-    //   return createErrorResponse(401, "UNAUTHORIZED", "Invalid or missing authentication token");
-    // }
+    const user = locals.user;
+    if (!user) {
+      return createErrorResponse(401, "UNAUTHORIZED", "Authentication required");
+    }
 
-    // Development: Using default user ID from database
-    const user_id = DEFAULT_USER_ID;
+    const user_id = user.id;
 
     // Parse request body
     let body: unknown;
@@ -101,30 +98,4 @@ export async function POST({ locals, request }: APIContext): Promise<Response> {
     console.error("Unexpected error in POST /api/flashcards/bulk:", error);
     return createErrorResponse(500, "INTERNAL_ERROR", "An unexpected error occurred. Please try again later.");
   }
-}
-
-/**
- * Helper function to create error responses
- */
-function createErrorResponse(
-  status: number,
-  code: ApiErrorDTO["error"]["code"],
-  message: string,
-  details?: unknown
-): Response {
-  const errorResponse: ApiErrorDTO = {
-    success: false,
-    error: {
-      code,
-      message,
-      ...(details !== undefined && { details }),
-    },
-  };
-
-  return new Response(JSON.stringify(errorResponse), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
 }

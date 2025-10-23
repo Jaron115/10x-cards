@@ -1,4 +1,3 @@
-import { Toaster } from "@/components/ui/sonner";
 import { GenerationForm } from "./GenerationForm";
 import { FlashcardProposalList } from "./FlashcardProposalList";
 import { useGenerator } from "./useGenerator";
@@ -27,8 +26,6 @@ export function GeneratorView() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <Toaster />
-
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold mb-2">Generator AI</h1>

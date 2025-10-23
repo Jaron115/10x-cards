@@ -3,6 +3,39 @@
  * Used throughout services and API routes for consistent error handling
  */
 
+import type { ApiErrorDTO } from "@/types";
+
+/**
+ * Creates a standardized error response for API endpoints
+ * @param status HTTP status code
+ * @param code Error code for client handling
+ * @param message User-friendly error message
+ * @param details Optional additional error details
+ * @returns Response object with JSON error payload
+ */
+export function createErrorResponse(
+  status: number,
+  code: ApiErrorDTO["error"]["code"],
+  message: string,
+  details?: unknown
+): Response {
+  const errorResponse: ApiErrorDTO = {
+    success: false,
+    error: {
+      code,
+      message,
+      ...(details !== undefined && { details }),
+    },
+  };
+
+  return new Response(JSON.stringify(errorResponse), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+}
+
 /**
  * Error thrown when a requested resource is not found
  * Maps to HTTP 404 status code

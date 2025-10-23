@@ -41,13 +41,17 @@ export const useAccount = (): UseAccountReturn => {
 
       // Przekierowanie do strony głównej
       toast.success("Konto zostało pomyślnie usunięte");
-      window.location.href = "/";
+
+      // Używamy setTimeout żeby toast zdążył się wyświetlić przed przekierowaniem
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 500);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Wystąpił nieoczekiwany błąd";
       setError(errorMessage);
       toast.error(errorMessage);
       setIsLoading(false);
-      throw err; // Rzucamy błąd dalej, aby komponent mógł obsłużyć stan dialogu
+      throw new Error(errorMessage); // Rzucamy Error object, nie err który może być czymkolwiek
     }
   };
 

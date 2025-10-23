@@ -1,15 +1,19 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SidebarNavItem } from "./SidebarNavItem";
 import type { SidebarProps, NavItem } from "@/types";
-import { toast } from "sonner";
+import { useAuth } from "@/components/auth/useAuth";
+import { useAuthStore } from "@/lib/stores/authStore";
 
 /**
  * Komponent nawigacji bocznej dla chronionych widoków
  * Wyświetla logo, listę linków nawigacyjnych oraz przycisk wylogowania
  */
 export const Sidebar = ({ currentPath, userEmail }: SidebarProps) => {
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { logout, isLoading } = useAuth();
+  const user = useAuthStore((state) => state.user);
+
+  // Use email from auth store if not provided via props
+  const displayEmail = userEmail || user?.email;
 
   // Definicja elementów nawigacyjnych
   const navItems: NavItem[] = [
@@ -38,12 +42,8 @@ export const Sidebar = ({ currentPath, userEmail }: SidebarProps) => {
   /**
    * Obsługa wylogowania użytkownika
    */
-  const handleLogout = () => {
-    // Development: No real logout needed, just redirect
-    // TODO: After middleware is updated, call supabase.auth.signOut()
-    setIsLoggingOut(true);
-    toast.success("Zostałeś wylogowany");
-    window.location.href = "/";
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
@@ -53,9 +53,9 @@ export const Sidebar = ({ currentPath, userEmail }: SidebarProps) => {
         <a href="/app/generator" className="flex items-center gap-2">
           <h1 className="text-xl font-bold text-foreground">10x Cards</h1>
         </a>
-        {userEmail && (
-          <p className="text-xs text-muted-foreground mt-2 truncate" title={userEmail}>
-            {userEmail}
+        {displayEmail && (
+          <p className="text-xs text-muted-foreground mt-2 truncate" title={displayEmail}>
+            {displayEmail}
           </p>
         )}
       </div>
@@ -77,8 +77,8 @@ export const Sidebar = ({ currentPath, userEmail }: SidebarProps) => {
 
       {/* Logout button at the bottom */}
       <div className="p-4 border-t border-border">
-        <Button variant="outline" className="w-full" onClick={handleLogout} disabled={isLoggingOut}>
-          {isLoggingOut ? "Wylogowywanie..." : "Wyloguj"}
+        <Button variant="outline" className="w-full" onClick={handleLogout} disabled={isLoading}>
+          {isLoading ? "Wylogowywanie..." : "Wyloguj"}
         </Button>
       </div>
     </aside>
