@@ -1,7 +1,6 @@
 ---
 import Layout from "./Layout.astro";
 import { Sidebar } from "../components/navigation/Sidebar";
-import { requireAuth } from "@/lib/auth/guards";
 
 interface Props {
   title?: string;
@@ -9,8 +8,15 @@ interface Props {
 
 const { title = "10x Cards" } = Astro.props;
 
-// Require authentication - redirect to login if not authenticated
-const user = requireAuth(Astro);
+// Authentication is checked in each page before using this layout
+// So we can safely assume user exists in Astro.locals
+const user = Astro.locals.user;
+
+if (!user) {
+  // This should never happen if pages properly use requireAuth
+  // But we include it as a safety check
+  return Astro.redirect("/");
+}
 
 const userEmail = user.email || undefined;
 const currentPath = Astro.url.pathname;

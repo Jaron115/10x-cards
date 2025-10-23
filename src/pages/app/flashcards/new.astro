@@ -1,9 +1,15 @@
 ---
 import AppLayout from "@/layouts/AppLayout.astro";
 import { FlashcardFormView } from "@/components/flashcards/FlashcardFormView";
+import { requireAuth } from "@/lib/auth/guards";
 
 export const prerender = false;
-// Page is protected by AppLayout - user must be authenticated
+
+// Require authentication - must be checked before any rendering
+const authResult = requireAuth(Astro);
+if (authResult instanceof Response) {
+  return authResult;
+}
 ---
 
 <AppLayout title="Dodaj fiszkę - 10x Cards">

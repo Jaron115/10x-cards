@@ -4,7 +4,10 @@ import Layout from "../layouts/Layout.astro";
 import { requireGuest } from "@/lib/auth/guards";
 
 // Redirect to /app/generator if already logged in
-requireGuest(Astro);
+const redirectResponse = requireGuest(Astro);
+if (redirectResponse) {
+  return redirectResponse;
+}
 
 // Check if session expired (for showing message)
 const sessionExpired = Astro.locals.sessionExpired || false;
