@@ -51,6 +51,7 @@ export function GenerationForm({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Textarea
+              data-testid="generator-source-textarea"
               value={sourceText}
               onChange={(e) => onSourceTextChange(e.target.value)}
               placeholder="Wklej tutaj tekst do nauki... np. notatki z wykładu, fragment książki, artykuł..."
@@ -58,7 +59,7 @@ export function GenerationForm({
               disabled={isLoading}
             />
             <div className="flex justify-between items-center text-sm">
-              <span className={getCharacterCountColor()}>
+              <span data-testid="generator-character-count" className={getCharacterCountColor()}>
                 {characterCount.toLocaleString()} / {MAX_CHARS.toLocaleString()} znaków
               </span>
               {characterCount < MIN_CHARS && characterCount > 0 && (
@@ -72,7 +73,12 @@ export function GenerationForm({
             </div>
           </div>
 
-          <Button type="submit" disabled={!isTextValid || isLoading} className="w-full sm:w-auto">
+          <Button
+            data-testid="generator-submit-button"
+            type="submit"
+            disabled={!isTextValid || isLoading}
+            className="w-full sm:w-auto"
+          >
             {isLoading ? (
               <>
                 <span className="animate-spin mr-2">⏳</span>

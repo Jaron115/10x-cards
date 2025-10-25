@@ -108,11 +108,12 @@ export function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form data-testid="login-form" onSubmit={handleSubmit} className="space-y-4">
       {/* Pole email */}
       <div className="space-y-2">
         <Label htmlFor="login-email">Email</Label>
         <Input
+          data-testid="login-email-input"
           id="login-email"
           type="email"
           value={formData.email}
@@ -134,6 +135,7 @@ export function LoginForm() {
       <div className="space-y-2">
         <Label htmlFor="login-password">Hasło</Label>
         <Input
+          data-testid="login-password-input"
           id="login-password"
           type="password"
           value={formData.password}
@@ -152,7 +154,7 @@ export function LoginForm() {
       </div>
 
       {/* Przycisk submit */}
-      <Button type="submit" className="w-full" disabled={!isFormValid() || isLoading}>
+      <Button data-testid="login-submit-button" type="submit" className="w-full" disabled={!isFormValid() || isLoading}>
         {isLoading ? "Logowanie..." : "Zaloguj się"}
       </Button>
     </form>

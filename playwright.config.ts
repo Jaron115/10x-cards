@@ -1,4 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
+import dotenv from "dotenv";
+import path from "path";
+
+// Load .env.test for E2E tests
+dotenv.config({ path: path.resolve(process.cwd(), ".env.test") });
 
 /**
  * Playwright configuration for E2E testing
@@ -49,6 +54,9 @@ export default defineConfig({
 
     // Ignore HTTPS errors
     ignoreHTTPSErrors: true,
+
+    // Set storage state to persist auth between tests
+    storageState: undefined, // Will be set in tests after login
   },
 
   // Configure projects for major browsers (only Chromium as per requirements)

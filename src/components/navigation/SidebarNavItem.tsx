@@ -5,9 +5,13 @@ import type { SidebarNavItemProps } from "@/types";
  * Wyświetla link z opcjonalną ikoną i etykietą
  */
 export const SidebarNavItem = ({ label, href, icon, isActive }: SidebarNavItemProps) => {
+  // Generate data-testid from href (e.g., "/app/generator" -> "nav-generator")
+  const testId = `nav-${href.split("/").pop()}`;
+
   return (
     <li>
       <a
+        data-testid={testId}
         href={href}
         className={`
           flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors

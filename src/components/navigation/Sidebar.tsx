@@ -47,9 +47,12 @@ export const Sidebar = ({ currentPath, userEmail }: SidebarProps) => {
   };
 
   return (
-    <aside className="hidden lg:flex w-64 bg-background border-r border-border flex-col h-screen sticky top-0">
+    <aside
+      data-testid="sidebar"
+      className="hidden lg:flex w-64 bg-background border-r border-border flex-col h-screen sticky top-0"
+    >
       {/* Header with logo */}
-      <div className="p-6 border-b border-border">
+      <div data-testid="sidebar-header" className="p-6 border-b border-border">
         <a href="/app/generator" className="flex items-center gap-2">
           <h1 className="text-xl font-bold text-foreground">10x Cards</h1>
         </a>
@@ -61,7 +64,7 @@ export const Sidebar = ({ currentPath, userEmail }: SidebarProps) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 overflow-y-auto">
+      <nav data-testid="sidebar-nav" className="flex-1 p-4 overflow-y-auto">
         <ul className="space-y-1">
           {navItems.map((item) => (
             <SidebarNavItem
@@ -77,7 +80,13 @@ export const Sidebar = ({ currentPath, userEmail }: SidebarProps) => {
 
       {/* Logout button at the bottom */}
       <div className="p-4 border-t border-border">
-        <Button variant="outline" className="w-full" onClick={handleLogout} disabled={isLoading}>
+        <Button
+          data-testid="logout-button"
+          variant="outline"
+          className="w-full"
+          onClick={handleLogout}
+          disabled={isLoading}
+        >
           {isLoading ? "Wylogowywanie..." : "Wyloguj"}
         </Button>
       </div>

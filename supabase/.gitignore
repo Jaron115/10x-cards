@@ -4,6 +4,7 @@
 
 # dotenvx
 .env
+.env.test
 .env.keys
 .env.local
 .env.*.local

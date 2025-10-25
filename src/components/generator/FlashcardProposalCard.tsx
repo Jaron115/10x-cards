@@ -74,6 +74,7 @@ export function FlashcardProposalCard({ proposal, onUpdateProposal, onSetProposa
 
   return (
     <Card
+      data-testid={`proposal-card-${proposal.id}`}
       className={cn(
         "transition-all",
         isApproved && "border-green-500 dark:border-green-600 bg-green-50/50 dark:bg-green-950/20",
@@ -88,6 +89,7 @@ export function FlashcardProposalCard({ proposal, onUpdateProposal, onSetProposa
           <div className="flex gap-1">
             {!isEditing && (
               <Button
+                data-testid={`proposal-approve-button-${proposal.id}`}
                 variant={isApproved ? "default" : "outline"}
                 size="icon"
                 onClick={handleApprove}
@@ -98,12 +100,20 @@ export function FlashcardProposalCard({ proposal, onUpdateProposal, onSetProposa
               </Button>
             )}
             {!isEditing && (
-              <Button variant="outline" size="icon" onClick={handleEdit} title="Edytuj" className="size-8">
+              <Button
+                data-testid={`proposal-edit-button-${proposal.id}`}
+                variant="outline"
+                size="icon"
+                onClick={handleEdit}
+                title="Edytuj"
+                className="size-8"
+              >
                 ✏️
               </Button>
             )}
             {isEditing && (
               <Button
+                data-testid={`proposal-save-edit-button-${proposal.id}`}
                 variant="outline"
                 size="icon"
                 onClick={handleSaveEdit}
@@ -115,12 +125,20 @@ export function FlashcardProposalCard({ proposal, onUpdateProposal, onSetProposa
               </Button>
             )}
             {isEditing && (
-              <Button variant="outline" size="icon" onClick={handleCancelEdit} title="Anuluj" className="size-8">
+              <Button
+                data-testid={`proposal-cancel-edit-button-${proposal.id}`}
+                variant="outline"
+                size="icon"
+                onClick={handleCancelEdit}
+                title="Anuluj"
+                className="size-8"
+              >
                 ✕
               </Button>
             )}
             {!isEditing && (
               <Button
+                data-testid={`proposal-reject-button-${proposal.id}`}
                 variant={isRejected ? "default" : "outline"}
                 size="icon"
                 onClick={handleReject}
@@ -139,6 +157,7 @@ export function FlashcardProposalCard({ proposal, onUpdateProposal, onSetProposa
           {isEditing ? (
             <div className="space-y-1">
               <Textarea
+                data-testid={`proposal-front-textarea-${proposal.id}`}
                 value={editedFront}
                 onChange={(e) => setEditedFront(e.target.value)}
                 className={cn("min-h-[80px] resize-y", !isFrontValid && "border-destructive")}
@@ -149,7 +168,12 @@ export function FlashcardProposalCard({ proposal, onUpdateProposal, onSetProposa
               </div>
             </div>
           ) : (
-            <p className="text-sm p-3 bg-muted rounded-md whitespace-pre-wrap">{proposal.front}</p>
+            <p
+              data-testid={`proposal-front-text-${proposal.id}`}
+              className="text-sm p-3 bg-muted rounded-md whitespace-pre-wrap"
+            >
+              {proposal.front}
+            </p>
           )}
         </div>
 
@@ -158,6 +182,7 @@ export function FlashcardProposalCard({ proposal, onUpdateProposal, onSetProposa
           {isEditing ? (
             <div className="space-y-1">
               <Textarea
+                data-testid={`proposal-back-textarea-${proposal.id}`}
                 value={editedBack}
                 onChange={(e) => setEditedBack(e.target.value)}
                 className={cn("min-h-[100px] resize-y", !isBackValid && "border-destructive")}
@@ -168,7 +193,12 @@ export function FlashcardProposalCard({ proposal, onUpdateProposal, onSetProposa
               </div>
             </div>
           ) : (
-            <p className="text-sm p-3 bg-muted rounded-md whitespace-pre-wrap">{proposal.back}</p>
+            <p
+              data-testid={`proposal-back-text-${proposal.id}`}
+              className="text-sm p-3 bg-muted rounded-md whitespace-pre-wrap"
+            >
+              {proposal.back}
+            </p>
           )}
         </div>
       </CardContent>

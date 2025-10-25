@@ -28,7 +28,7 @@ export function FlashcardProposalList({
 }: FlashcardProposalListProps) {
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div data-testid="proposals-loading-skeleton" className="space-y-4">
         <h2 className="text-2xl font-semibold">Generowanie propozycji...</h2>
         <div className="grid gap-4 md:grid-cols-2">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -49,18 +49,20 @@ export function FlashcardProposalList({
   }
 
   return (
-    <div className="space-y-6">
+    <div data-testid="proposals-container" className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Propozycje fiszek</h2>
+          <h2 data-testid="proposals-header" className="text-2xl font-semibold">
+            Propozycje fiszek
+          </h2>
           <p className="text-muted-foreground">
             Wygenerowano {proposals.length} {proposals.length === 1 ? "fiszkę" : "fiszek"}
-            {approvedCount > 0 && ` • Zatwierdzono: ${approvedCount}`}
+            {approvedCount > 0 && <span data-testid="proposals-approved-count"> • Zatwierdzono: {approvedCount}</span>}
           </p>
         </div>
 
         {approvedCount > 0 && (
-          <Button onClick={onSave} disabled={isSaving} size="lg">
+          <Button data-testid="proposals-save-button" onClick={onSave} disabled={isSaving} size="lg">
             {isSaving ? (
               <>
                 <span className="animate-spin mr-2">⏳</span>
@@ -86,7 +88,7 @@ export function FlashcardProposalList({
 
       {approvedCount > 0 && (
         <div className="flex justify-center">
-          <Button onClick={onSave} disabled={isSaving} size="lg">
+          <Button data-testid="proposals-save-button" onClick={onSave} disabled={isSaving} size="lg">
             {isSaving ? (
               <>
                 <span className="animate-spin mr-2">⏳</span>
