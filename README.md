@@ -4,12 +4,21 @@ A modern flashcard application built with Astro, React, and AI-powered generatio
 
 ## Tech Stack
 
+### Core Technologies
+
 - [Astro](https://astro.build/) v5.5.5 - Modern web framework for building fast, content-focused websites
 - [React](https://react.dev/) v19.0.0 - UI library for building interactive components
 - [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
 - [Tailwind CSS](https://tailwindcss.com/) v4.0.17 - Utility-first CSS framework
 - [Supabase](https://supabase.com/) - Backend as a Service (Auth, Database, Storage)
 - [Openrouter.ai](https://openrouter.ai/) - AI API for flashcard generation
+
+### Testing
+
+- [Vitest](https://vitest.dev/) - Unit testing framework with native ESM support
+- [Playwright](https://playwright.dev/) - End-to-end testing framework
+- [Testing Library](https://testing-library.com/) - React component testing utilities
+- [MSW](https://mswjs.io/) - Mock Service Worker for API mocking
 
 ## Prerequisites
 
@@ -60,6 +69,7 @@ npx supabase db reset
 ```
 
 This will:
+
 - Start local PostgreSQL database
 - Apply all migrations from `supabase/migrations/`
 - Create the necessary tables and indexes
@@ -81,15 +91,27 @@ npm run build
 ## Available Scripts
 
 ### Application
+
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 
 ### Code Quality
+
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Fix ESLint issues
 
+### Testing
+
+- `npm run test` - Run unit tests in watch mode
+- `npm run test:coverage` - Run unit tests with coverage report
+- `npm run test:ui` - Run unit tests with interactive UI
+- `npm run test:e2e` - Run end-to-end tests
+- `npm run test:e2e:ui` - Run E2E tests with Playwright UI
+- `npm run test:e2e:debug` - Run E2E tests in debug mode
+
 ### Supabase (requires Supabase CLI)
+
 - `npx supabase start` - Start local Supabase instance
 - `npx supabase stop` - Stop local Supabase instance
 - `npx supabase db reset` - Reset database and apply migrations
@@ -138,6 +160,7 @@ npm run build
 Generate flashcard proposals from text using AI.
 
 **Request:**
+
 ```json
 {
   "source_text": "Your text here (1000-10000 characters)"
@@ -145,6 +168,7 @@ Generate flashcard proposals from text using AI.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -197,7 +221,84 @@ npx supabase db reset
 ### Local Development
 
 The app uses Supabase local instance with a test user:
+
 - User ID: `c9bdbe74-1ccb-47fc-a3ae-b50b20163cdd`
+
+## Testing
+
+The application uses a comprehensive testing strategy with both unit and E2E tests.
+
+### Unit Tests (Vitest)
+
+Unit tests focus on isolated units of code - services, validation schemas, utilities, and React components.
+
+```bash
+# Run tests in watch mode
+npm run test
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Open interactive UI
+npm run test:ui
+```
+
+**Coverage targets:**
+
+- Lines: ≥ 80%
+- Functions: ≥ 80%
+- Branches: ≥ 80%
+- Statements: ≥ 80%
+
+### End-to-End Tests (Playwright)
+
+E2E tests cover critical user flows and integration scenarios.
+
+```bash
+# Run E2E tests
+npm run test:e2e
+
+# Run with Playwright UI (interactive)
+npm run test:e2e:ui
+
+# Run in debug mode
+npm run test:e2e:debug
+```
+
+**Tested flows:**
+
+- User authentication (registration, login, logout)
+- AI flashcard generation with rate limiting
+- Flashcard CRUD operations
+- Pagination and filtering
+
+### Test Structure
+
+```
+src/
+├── lib/
+│   └── services/
+│       ├── flashcard.service.ts
+│       └── flashcard.service.test.ts
+├── test/
+│   ├── setup.ts
+│   ├── mocks/
+│   │   ├── supabase.mock.ts
+│   │   └── handlers.ts (MSW)
+│   └── fixtures/
+│       └── flashcards.fixture.ts
+e2e/
+├── auth/
+│   ├── login.spec.ts
+│   └── register.spec.ts
+├── flashcards/
+│   ├── create.spec.ts
+│   └── list.spec.ts
+└── generator/
+    └── generate.spec.ts
+```
+
+For detailed testing strategy, see `.ai/test-plan.md`.
 
 ## Development Configuration
 
@@ -206,11 +307,12 @@ The app uses Supabase local instance with a test user:
 By default, the app uses mock AI responses. To enable real AI:
 
 **File:** `src/pages/api/generations.ts`
+
 ```typescript
 const DEV_CONFIG = {
-  SKIP_RATE_LIMIT: false,  // Enable rate limiting
-  USE_MOCK_AI: false,      // Use real AI API
-}
+  SKIP_RATE_LIMIT: false, // Enable rate limiting
+  USE_MOCK_AI: false, // Use real AI API
+};
 ```
 
 ## AI Development Support
