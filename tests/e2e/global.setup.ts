@@ -23,43 +23,40 @@ async function globalSetup(config: FullConfig) {
   console.log("🔐 Setting up authentication...");
 
   const browser = await chromium.launch();
-  const page = await browser.newPage();
+  const context = await browser.newContext();
+  const page = await context.newPage();
 
   try {
-    // Navigate to login page
-    await page.goto(baseURL);
-
-    // Wait for login form
-    await page.waitForSelector('[data-testid="login-form"]', { state: "visible", timeout: 10000 });
-
-    // Fill in credentials
-    await page.fill('[data-testid="login-email-input"]', email);
-    await page.fill('[data-testid="login-password-input"]', password);
-
-    // Wait a bit for validation
-    await page.waitForTimeout(1000);
-
-    // Submit form directly (bypasses button validation)
-    await page.evaluate(() => {
-      const form = document.querySelector('[data-testid="login-form"]') as HTMLFormElement;
-      if (form) {
-        form.requestSubmit();
-      }
+    // Login via API endpoint (more stable than UI)
+    const loginResponse = await page.request.post(`${baseURL}/api/auth/login`, {
+      data: {
+        email,
+        password,
+      },
     });
 
-    // Wait for successful navigation
-    await page.waitForURL(/\/app/, { timeout: 10000 });
+    if (!loginResponse.ok()) {
+      throw new Error(`Login failed with status ${loginResponse.status()}`);
+    }
 
-    // Verify we're logged in
-    await page.waitForSelector('[data-testid="sidebar"]', { state: "visible", timeout: 5000 });
+    // Navigate to app to verify login worked
+    await page.goto(`${baseURL}/app/generator`);
+
+    // Wait for authenticated page to load
+    await page.waitForSelector('[data-testid="sidebar"]', { state: "visible", timeout: 10000 });
 
     // Save authentication state
-    await page.context().storageState({ path: authFile });
+    await context.storageState({ path: authFile });
 
     // eslint-disable-next-line no-console
     console.log("✅ Authentication state saved to", authFile);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("❌ Authentication failed:", error);
+    throw error;
   } finally {
     await page.close();
+    await context.close();
     await browser.close();
   }
 }
