@@ -4,7 +4,10 @@ This directory contains CI/CD workflows for the 10x Cards project.
 
 ## pull-request.yml
 
-Workflow that runs on every pull request to the `master` branch.
+Workflow that runs on:
+
+- Every pull request to the `master` branch
+- Every push to the `master` branch
 
 ### Jobs Flow
 
