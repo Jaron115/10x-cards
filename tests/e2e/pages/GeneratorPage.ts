@@ -53,10 +53,32 @@ export class GeneratorPage {
   }
 
   /**
+   * Fill source textarea with text
+   * For large texts (>5000 chars), uses optimized method with zero delay
+   *
+   * @param text - The text to fill
+   */
+  async fillSourceText(text: string) {
+    // For very large texts, use pressSequentially with delay: 0
+    // This triggers proper React events but is much faster than normal typing
+    if (text.length > 5000) {
+      await this.sourceTextarea.click();
+      await this.sourceTextarea.clear();
+      // pressSequentially with delay: 0 is fast but triggers proper React onChange events
+      await this.sourceTextarea.pressSequentially(text, { delay: 0 });
+      // Small wait for React state to update
+      await this.page.waitForTimeout(300);
+    } else {
+      // For smaller texts, use normal fill for realistic interaction
+      await this.sourceTextarea.fill(text);
+    }
+  }
+
+  /**
    * Fill source text and generate flashcards
    */
   async generateFlashcards(sourceText: string) {
-    await this.sourceTextarea.fill(sourceText);
+    await this.fillSourceText(sourceText);
     await this.generateButton.click();
   }
 

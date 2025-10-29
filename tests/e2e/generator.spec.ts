@@ -18,7 +18,7 @@ test.describe("Generator AI - Generowanie fiszek", () => {
     const sourceText = generateTestText(1500);
 
     // Fill source text
-    await generatorPage.sourceTextarea.fill(sourceText);
+    await generatorPage.fillSourceText(sourceText);
 
     // Verify character count is displayed correctly
     const charCountText = await generatorPage.characterCount.textContent();
@@ -207,7 +207,7 @@ test.describe("Generator AI - Walidacja", () => {
 
     // Fill with text that's too short (< 1000 chars)
     const shortText = generateTestText(500);
-    await generatorPage.sourceTextarea.fill(shortText);
+    await generatorPage.fillSourceText(shortText);
 
     // Button should be disabled
     await expect(generatorPage.generateButton).toBeDisabled();
@@ -218,12 +218,15 @@ test.describe("Generator AI - Walidacja", () => {
   });
 
   test("przycisk generowania powinien być wyłączony dla za długiego tekstu", async ({ page }) => {
+    // Increase timeout for this test as it handles a large text
+    test.setTimeout(60000);
+
     const generatorPage = new GeneratorPage(page);
     await generatorPage.goto();
 
     // Fill with text that's too long (> 10000 chars)
     const longText = generateTestText(11000);
-    await generatorPage.sourceTextarea.fill(longText);
+    await generatorPage.fillSourceText(longText);
 
     // Button should be disabled
     await expect(generatorPage.generateButton).toBeDisabled();
@@ -239,7 +242,7 @@ test.describe("Generator AI - Walidacja", () => {
 
     // Fill with valid text (between 1000-10000 chars)
     const validText = generateTestText(5000);
-    await generatorPage.sourceTextarea.fill(validText);
+    await generatorPage.fillSourceText(validText);
 
     // Button should be enabled
     await expect(generatorPage.generateButton).toBeEnabled();

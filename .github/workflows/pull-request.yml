@@ -88,6 +88,15 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
+      - name: Create .env file for Astro
+        run: |
+          echo "SUPABASE_URL=${SUPABASE_URL}" >> .env
+          echo "SUPABASE_KEY=${SUPABASE_KEY}" >> .env
+          echo "SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}" >> .env
+          echo "E2E_USERNAME_ID=${E2E_USERNAME_ID}" >> .env
+          echo "E2E_USERNAME=${E2E_USERNAME}" >> .env
+          echo "E2E_PASSWORD=${E2E_PASSWORD}" >> .env
+
       - name: Run E2E tests
         run: npm run test:e2e
 
