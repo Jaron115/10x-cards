@@ -11,12 +11,16 @@ const authFile = path.join(__dirname, "../../.auth/user.json");
  * This runs before all tests and creates a reusable auth state
  */
 async function globalSetup(config: FullConfig) {
-  const baseURL = config.use?.baseURL || "http://localhost:4321";
+  const baseURL = config.projects[0]?.use?.baseURL || "http://localhost:4321";
   const email = process.env.E2E_USERNAME;
   const password = process.env.E2E_PASSWORD;
 
   if (!email || !password) {
-    throw new Error("Missing E2E_USERNAME or E2E_PASSWORD in .env.test");
+    throw new Error(
+      "Missing E2E_USERNAME or E2E_PASSWORD environment variables. " +
+        "In local development, add them to .env.test file. " +
+        "In CI, ensure they are configured as secrets."
+    );
   }
 
   // eslint-disable-next-line no-console
