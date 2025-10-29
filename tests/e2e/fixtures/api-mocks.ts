@@ -143,7 +143,7 @@ export async function mockFlashcardSaveAPI(page: Page, options?: { delay?: numbe
             success: true,
             data: {
               saved_count: flashcards.length,
-              flashcards: flashcards.map((fc: any, index: number) => ({
+              flashcards: flashcards.map((fc: Record<string, unknown>, index: number) => ({
                 id: 1000 + index,
                 ...fc,
                 user_id: process.env.E2E_USERNAME_ID,

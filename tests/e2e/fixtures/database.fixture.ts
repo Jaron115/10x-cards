@@ -82,8 +82,12 @@ export async function cleanupTestUserData(userId: string) {
  * Extended test with database cleanup fixtures
  */
 export const test = base.extend<DatabaseFixtures>({
+  // eslint-disable-next-line no-empty-pattern
   cleanupFlashcards: async ({}, use) => {
-    const userId = process.env.E2E_USERNAME_ID!;
+    const userId = process.env.E2E_USERNAME_ID;
+    if (!userId) {
+      throw new Error("E2E_USERNAME_ID is required for database cleanup");
+    }
 
     const cleanup = async () => {
       await deleteTestUserFlashcards(userId);
@@ -100,8 +104,12 @@ export const test = base.extend<DatabaseFixtures>({
     }
   },
 
+  // eslint-disable-next-line no-empty-pattern
   cleanupGenerations: async ({}, use) => {
-    const userId = process.env.E2E_USERNAME_ID!;
+    const userId = process.env.E2E_USERNAME_ID;
+    if (!userId) {
+      throw new Error("E2E_USERNAME_ID is required for database cleanup");
+    }
 
     const cleanup = async () => {
       await deleteTestUserGenerations(userId);
@@ -118,8 +126,12 @@ export const test = base.extend<DatabaseFixtures>({
     }
   },
 
+  // eslint-disable-next-line no-empty-pattern
   cleanupAll: async ({}, use) => {
-    const userId = process.env.E2E_USERNAME_ID!;
+    const userId = process.env.E2E_USERNAME_ID;
+    if (!userId) {
+      throw new Error("E2E_USERNAME_ID is required for database cleanup");
+    }
 
     const cleanup = async () => {
       await cleanupTestUserData(userId);

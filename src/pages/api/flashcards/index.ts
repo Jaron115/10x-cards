@@ -10,7 +10,7 @@
 
 import type { APIContext } from "astro";
 import { z } from "zod";
-import type { ApiErrorDTO, ApiResponseDTO, FlashcardDTO, GetFlashcardsResponseDTO } from "../../../types.ts";
+import type { ApiResponseDTO, FlashcardDTO, GetFlashcardsResponseDTO } from "../../../types.ts";
 import { createErrorResponse } from "../../../lib/errors.ts";
 import { FlashcardService } from "../../../lib/services/flashcard.service.ts";
 import {

@@ -109,7 +109,7 @@ jobs:
   status-comment:
     name: Post Status Comment
     needs: [lint, unit-test, e2e-test]
-    if: success()
+    if: success() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write

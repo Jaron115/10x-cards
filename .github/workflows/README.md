@@ -45,7 +45,7 @@ lint
 
 #### 4. Status Comment (`status-comment`)
 
-- Only runs if all previous jobs succeed
+- Only runs if all previous jobs succeed **AND** it's a pull request (skipped on push)
 - Downloads unit test coverage artifacts
 - Posts a success comment to the pull request
 - Includes coverage information if available
