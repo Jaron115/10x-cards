@@ -2,9 +2,13 @@ import { defineConfig, devices } from "@playwright/test";
 import dotenv from "dotenv";
 import path from "path";
 
-// Load .env.test for E2E tests (only if not in CI - CI uses environment variables)
+// Load environment variables from appropriate .env file
 if (!process.env.CI) {
+  // Local development - use .env.test
   dotenv.config({ path: path.resolve(process.cwd(), ".env.test") });
+} else {
+  // CI environment - load .env file created by GitHub Actions
+  dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 }
 
 /**
@@ -78,6 +82,13 @@ export default defineConfig({
     url: "http://localhost:4321",
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
+    // Explicitly pass environment variables to the dev server
+    env: {
+      SUPABASE_URL: process.env.SUPABASE_URL || "",
+      SUPABASE_KEY: process.env.SUPABASE_KEY || "",
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+      CI: process.env.CI || "false",
+    },
   },
 
   // Output directory for test artifacts

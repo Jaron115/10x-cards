@@ -5,6 +5,17 @@ import type { Database } from "../db/database.types.ts";
 const supabaseUrl = import.meta.env.SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
 
+// Debug logging for CI
+if (process.env.CI) {
+  console.log("[SUPABASE CLIENT] Environment check:");
+  console.log(
+    `  SUPABASE_URL: ${supabaseUrl ? `${supabaseUrl.substring(0, 20)}... (${supabaseUrl.length} chars)` : "MISSING"}`
+  );
+  console.log(
+    `  SUPABASE_KEY: ${supabaseAnonKey ? `${supabaseAnonKey.substring(0, 10)}... (${supabaseAnonKey.length} chars)` : "MISSING"}`
+  );
+}
+
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
     `Missing required environment variables:\n` +
