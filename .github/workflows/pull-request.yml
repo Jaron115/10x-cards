@@ -88,14 +88,63 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
+      - name: Verify secrets are available
+        run: |
+          echo "Checking if secrets are available..."
+          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+            echo "❌ SUPABASE_URL secret is EMPTY or NOT SET"
+            exit 1
+          else
+            echo "✅ SUPABASE_URL is available (length: $(echo -n '${{ secrets.SUPABASE_URL }}' | wc -c))"
+          fi
+
+          if [ -z "${{ secrets.SUPABASE_KEY }}" ]; then
+            echo "❌ SUPABASE_KEY secret is EMPTY or NOT SET"
+            exit 1
+          else
+            echo "✅ SUPABASE_KEY is available (length: $(echo -n '${{ secrets.SUPABASE_KEY }}' | wc -c))"
+          fi
+
+          if [ -z "${{ secrets.E2E_USERNAME }}" ]; then
+            echo "❌ E2E_USERNAME secret is EMPTY or NOT SET"
+            exit 1
+          else
+            echo "✅ E2E_USERNAME is available: ${{ secrets.E2E_USERNAME }}"
+          fi
+
+          if [ -z "${{ secrets.E2E_PASSWORD }}" ]; then
+            echo "❌ E2E_PASSWORD secret is EMPTY or NOT SET"
+            exit 1
+          else
+            echo "✅ E2E_PASSWORD is available (length: $(echo -n '${{ secrets.E2E_PASSWORD }}' | wc -c))"
+          fi
+
       - name: Create .env file for Astro
         run: |
-          echo "SUPABASE_URL=${SUPABASE_URL}" >> .env
-          echo "SUPABASE_KEY=${SUPABASE_KEY}" >> .env
-          echo "SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}" >> .env
-          echo "E2E_USERNAME_ID=${E2E_USERNAME_ID}" >> .env
-          echo "E2E_USERNAME=${E2E_USERNAME}" >> .env
-          echo "E2E_PASSWORD=${E2E_PASSWORD}" >> .env
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
+          echo "SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}" >> .env
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env
+          echo "E2E_USERNAME_ID=${{ secrets.E2E_USERNAME_ID }}" >> .env
+          echo "E2E_USERNAME=${{ secrets.E2E_USERNAME }}" >> .env
+          echo "E2E_PASSWORD=${{ secrets.E2E_PASSWORD }}" >> .env
+
+      - name: Verify .env file was created
+        run: |
+          echo "Checking if .env file exists..."
+          if [ -f .env ]; then
+            echo "✅ .env file exists"
+            echo "File size: $(wc -c < .env) bytes"
+            echo "Number of lines: $(wc -l < .env)"
+            echo ""
+            echo "Environment variables (first 10 chars only for security):"
+            echo "SUPABASE_URL: $(head -c 10 .env | head -1)..."
+            echo "Content preview (first 100 chars):"
+            head -c 100 .env
+            echo ""
+          else
+            echo "❌ .env file does NOT exist"
+            exit 1
+          fi
 
       - name: Run E2E tests
         run: npm run test:e2e
