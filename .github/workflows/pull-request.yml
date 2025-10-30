@@ -148,12 +148,28 @@ jobs:
               exit 1
             fi
             
-            if grep -q "SUPABASE_KEY=eyJ" .env; then
-              echo "✅ SUPABASE_KEY contains actual JWT token"
-            else
-              echo "❌ SUPABASE_KEY does not contain actual JWT (might be masked)"
+            # Check SUPABASE_KEY - it should not be ***
+            SUPABASE_KEY_LINE=$(grep "^SUPABASE_KEY=" .env || echo "")
+            if [ -z "$SUPABASE_KEY_LINE" ]; then
+              echo "❌ SUPABASE_KEY line not found in .env"
               exit 1
             fi
+            
+            # Extract the value after =
+            SUPABASE_KEY_VALUE="${SUPABASE_KEY_LINE#*=}"
+            
+            if [ "$SUPABASE_KEY_VALUE" = "***" ] || [ "$SUPABASE_KEY_VALUE" = "" ]; then
+              echo "❌ SUPABASE_KEY is masked or empty: '$SUPABASE_KEY_VALUE'"
+              exit 1
+            fi
+            
+            # Check if it's at least 50 characters (valid Supabase keys are long)
+            if [ ${#SUPABASE_KEY_VALUE} -lt 50 ]; then
+              echo "❌ SUPABASE_KEY is too short (${#SUPABASE_KEY_VALUE} chars): '$SUPABASE_KEY_VALUE'"
+              exit 1
+            fi
+            
+            echo "✅ SUPABASE_KEY contains actual value (${#SUPABASE_KEY_VALUE} chars, starts with '${SUPABASE_KEY_VALUE:0:4}...')"
           else
             echo "❌ .env file does NOT exist"
             exit 1
