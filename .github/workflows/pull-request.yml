@@ -121,12 +121,15 @@ jobs:
 
       - name: Create .env file for Astro
         run: |
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
-          echo "SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}" >> .env
-          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env
-          echo "E2E_USERNAME_ID=${{ secrets.E2E_USERNAME_ID }}" >> .env
-          echo "E2E_USERNAME=${{ secrets.E2E_USERNAME }}" >> .env
-          echo "E2E_PASSWORD=${{ secrets.E2E_PASSWORD }}" >> .env
+          {
+            printf "SUPABASE_URL=%s\n" "${SUPABASE_URL}"
+            printf "SUPABASE_KEY=%s\n" "${SUPABASE_KEY}"
+            printf "SUPABASE_SERVICE_ROLE_KEY=%s\n" "${SUPABASE_SERVICE_ROLE_KEY}"
+            printf "E2E_USERNAME_ID=%s\n" "${E2E_USERNAME_ID}"
+            printf "E2E_USERNAME=%s\n" "${E2E_USERNAME}"
+            printf "E2E_PASSWORD=%s\n" "${E2E_PASSWORD}"
+          } > .env
+          echo "✅ .env file created successfully"
 
       - name: Verify .env file was created
         run: |
@@ -135,12 +138,22 @@ jobs:
             echo "✅ .env file exists"
             echo "File size: $(wc -c < .env) bytes"
             echo "Number of lines: $(wc -l < .env)"
-            echo ""
-            echo "Environment variables (first 10 chars only for security):"
-            echo "SUPABASE_URL: $(head -c 10 .env | head -1)..."
-            echo "Content preview (first 100 chars):"
-            head -c 100 .env
-            echo ""
+            
+            # Check if file contains actual values (not masked ***)
+            if grep -q "SUPABASE_URL=https://" .env; then
+              echo "✅ SUPABASE_URL contains actual URL"
+            else
+              echo "❌ SUPABASE_URL does not contain actual URL (might be masked)"
+              cat .env
+              exit 1
+            fi
+            
+            if grep -q "SUPABASE_KEY=eyJ" .env; then
+              echo "✅ SUPABASE_KEY contains actual JWT token"
+            else
+              echo "❌ SUPABASE_KEY does not contain actual JWT (might be masked)"
+              exit 1
+            fi
           else
             echo "❌ .env file does NOT exist"
             exit 1
