@@ -1,95 +1,132 @@
-import { Textarea } from "@/components/ui/textarea";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useImperativeHandle, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormTextarea } from "@/components/forms/FormTextarea";
+import {
+  generationFormSchema,
+  type GenerationFormData,
+  GENERATION_MIN_CHARS,
+  GENERATION_MAX_CHARS,
+} from "@/lib/schemas/generation-form.schemas";
 
 interface GenerationFormProps {
-  sourceText: string;
   onSourceTextChange: (text: string) => void;
   onGenerate: () => void;
   isLoading: boolean;
-  characterCount: number;
-  isTextValid: boolean;
 }
 
-const MIN_CHARS = 1000;
-const MAX_CHARS = 10000;
+export interface GenerationFormRef {
+  reset: () => void;
+}
 
 /**
  * Form for entering source text to generate flashcards
+ * Uses react-hook-form with Zod validation and FormTextarea
  */
-export function GenerationForm({
-  sourceText,
-  onSourceTextChange,
-  onGenerate,
-  isLoading,
-  characterCount,
-  isTextValid,
-}: GenerationFormProps) {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isTextValid && !isLoading) {
-      onGenerate();
-    }
-  };
+export const GenerationForm = forwardRef<GenerationFormRef, GenerationFormProps>(
+  ({ onSourceTextChange, onGenerate, isLoading }, ref) => {
+    const form = useForm<GenerationFormData>({
+      resolver: zodResolver(generationFormSchema),
+      mode: "onChange",
+      defaultValues: {
+        sourceText: "",
+      },
+    });
 
-  const getCharacterCountColor = () => {
-    if (characterCount < MIN_CHARS) return "text-muted-foreground";
-    if (characterCount > MAX_CHARS) return "text-destructive";
-    return "text-green-600 dark:text-green-400";
-  };
+    const {
+      formState: { isValid },
+      watch,
+    } = form;
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Tekst źródłowy</CardTitle>
-        <CardDescription>
-          Wklej tekst (od {MIN_CHARS.toLocaleString()} do {MAX_CHARS.toLocaleString()} znaków), z którego AI wygeneruje
-          fiszki
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Textarea
-              data-testid="generator-source-textarea"
-              value={sourceText}
-              onChange={(e) => onSourceTextChange(e.target.value)}
-              placeholder="Wklej tutaj tekst do nauki... np. notatki z wykładu, fragment książki, artykuł..."
-              className="min-h-[200px] resize-y"
-              disabled={isLoading}
-            />
-            <div className="flex justify-between items-center text-sm">
-              <span data-testid="generator-character-count" className={getCharacterCountColor()}>
-                {characterCount.toLocaleString()} / {MAX_CHARS.toLocaleString()} znaków
-              </span>
-              {characterCount < MIN_CHARS && characterCount > 0 && (
-                <span className="text-muted-foreground">Minimum: {MIN_CHARS.toLocaleString()} znaków</span>
-              )}
-              {characterCount > MAX_CHARS && (
-                <span className="text-destructive">
-                  Przekroczono limit o {(characterCount - MAX_CHARS).toLocaleString()} znaków
-                </span>
-              )}
-            </div>
-          </div>
+    const currentText = watch("sourceText");
+    const characterCount = currentText.length;
 
-          <Button
-            data-testid="generator-submit-button"
-            type="submit"
-            disabled={!isTextValid || isLoading}
-            className="w-full sm:w-auto"
-          >
-            {isLoading ? (
-              <>
-                <span className="animate-spin mr-2">⏳</span>
-                Generowanie...
-              </>
-            ) : (
-              "Generuj fiszki"
-            )}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
-  );
-}
+    // Expose reset method to parent
+    useImperativeHandle(ref, () => ({
+      reset: () => {
+        form.reset({ sourceText: "" });
+      },
+    }));
+
+    // Sync form changes back to parent
+    useEffect(() => {
+      onSourceTextChange(currentText);
+    }, [currentText, onSourceTextChange]);
+
+    const handleSubmit = form.handleSubmit(() => {
+      if (isValid && !isLoading) {
+        onGenerate();
+      }
+    });
+
+    const getCharacterCountColor = () => {
+      if (characterCount < GENERATION_MIN_CHARS) return "text-muted-foreground";
+      if (characterCount > GENERATION_MAX_CHARS) return "text-destructive";
+      return "text-green-600 dark:text-green-400";
+    };
+
+    return (
+      <FormProvider {...form}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Tekst źródłowy</CardTitle>
+            <CardDescription>
+              Wklej tekst (od {GENERATION_MIN_CHARS.toLocaleString()} do {GENERATION_MAX_CHARS.toLocaleString()}{" "}
+              znaków), z którego AI wygeneruje fiszki
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <FormTextarea
+                  name="sourceText"
+                  label="Tekst źródłowy"
+                  placeholder="Wklej tutaj tekst do nauki... np. notatki z wykładu, fragment książki, artykuł..."
+                  disabled={isLoading}
+                  rows={12}
+                  minHeight="300px"
+                  testId="generator-source-textarea"
+                />
+                <div className="flex justify-between items-center text-sm">
+                  <span data-testid="generator-character-count" className={getCharacterCountColor()}>
+                    {characterCount.toLocaleString()} / {GENERATION_MAX_CHARS.toLocaleString()} znaków
+                  </span>
+                  {characterCount < GENERATION_MIN_CHARS && characterCount > 0 && (
+                    <span className="text-muted-foreground">
+                      Minimum: {GENERATION_MIN_CHARS.toLocaleString()} znaków
+                    </span>
+                  )}
+                  {characterCount > GENERATION_MAX_CHARS && (
+                    <span className="text-destructive">
+                      Przekroczono limit o {(characterCount - GENERATION_MAX_CHARS).toLocaleString()} znaków
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <Button
+                data-testid="generator-submit-button"
+                type="submit"
+                disabled={!isValid || isLoading}
+                className="w-full sm:w-auto"
+              >
+                {isLoading ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span>
+                    Generowanie...
+                  </>
+                ) : (
+                  "Generuj fiszki"
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </FormProvider>
+    );
+  }
+);
+
+GenerationForm.displayName = "GenerationForm";

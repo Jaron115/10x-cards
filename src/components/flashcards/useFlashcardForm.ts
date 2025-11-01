@@ -1,13 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import type {
-  FlashcardDTO,
-  CreateFlashcardCommand,
-  UpdateFlashcardCommand,
-  ApiResponseDTO,
-  ApiErrorDTO,
-  ValidationErrorDetailDTO,
-} from "@/types";
+import { flashcardFormSchema, type FlashcardFormData } from "@/lib/schemas/flashcard-form.schemas";
+import { getFlashcard, createFlashcard, updateFlashcard } from "@/lib/api/flashcardClient";
 
 interface UseFlashcardFormParams {
   mode: "create" | "edit";
@@ -18,225 +14,88 @@ interface UseFlashcardFormParams {
 /**
  * Hook managing the state of the flashcard form
  * Handles both create and edit modes, validation, and save operations
+ * Uses react-hook-form with Zod validation
  */
 export function useFlashcardForm({ mode, flashcardId, onSuccess }: UseFlashcardFormParams) {
-  // Form state
-  const [front, setFront] = useState("");
-  const [back, setBack] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [validationErrors, setValidationErrors] = useState<{
-    front?: string;
-    back?: string;
-  }>({});
+
+  const form = useForm<FlashcardFormData>({
+    resolver: zodResolver(flashcardFormSchema),
+    mode: "onChange",
+    defaultValues: {
+      front: "",
+      back: "",
+    },
+  });
+
+  const fetchFlashcardData = useCallback(
+    async (id: number) => {
+      setIsLoading(true);
+
+      const result = await getFlashcard(id);
+
+      if (result.success && result.data) {
+        form.reset({
+          front: result.data.data.front,
+          back: result.data.data.back,
+        });
+      } else if (result.error) {
+        toast.error(result.error);
+        // Redirect to flashcards list on error
+        setTimeout(() => {
+          window.location.assign("/app/flashcards");
+        }, 2000);
+      }
+
+      setIsLoading(false);
+    },
+    [form]
+  );
 
   // Fetch flashcard data in edit mode
   useEffect(() => {
     if (mode === "edit" && flashcardId) {
-      fetchFlashcard(flashcardId);
+      fetchFlashcardData(flashcardId);
     }
-  }, [mode, flashcardId]);
-
-  const fetchFlashcard = async (id: number) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/flashcards/${id}`);
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          window.location.href = "/";
-          throw new Error("Sesja wygasła. Zaloguj się ponownie.");
-        }
-        if (response.status === 404) {
-          throw new Error("Nie znaleziono fiszki");
-        }
-        throw new Error("Błąd podczas pobierania fiszki");
-      }
-
-      const data: ApiResponseDTO<FlashcardDTO> = await response.json();
-      setFront(data.data.front);
-      setBack(data.data.back);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Błąd podczas pobierania fiszki";
-      setError(errorMessage);
-      toast.error(errorMessage);
-
-      // Redirect to list on error
-      if (typeof window !== "undefined") {
-        setTimeout(() => {
-          window.location.href = "/app/flashcards";
-        }, 2000);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Validate front field
-  const validateFront = useCallback((value: string): string | undefined => {
-    if (!value || value.trim() === "") {
-      return "Przód fiszki jest wymagany";
-    }
-    if (value.length > 200) {
-      return "Przód fiszki może mieć maksymalnie 200 znaków";
-    }
-    return undefined;
-  }, []);
-
-  // Validate back field
-  const validateBack = useCallback((value: string): string | undefined => {
-    if (!value || value.trim() === "") {
-      return "Tył fiszki jest wymagany";
-    }
-    if (value.length > 500) {
-      return "Tył fiszki może mieć maksymalnie 500 znaków";
-    }
-    return undefined;
-  }, []);
-
-  // Handler for front field change
-  const handleFrontChange = useCallback(
-    (value: string) => {
-      setFront(value);
-      // Real-time validation
-      const error = validateFront(value);
-      setValidationErrors((prev) => ({ ...prev, front: error }));
-    },
-    [validateFront]
-  );
-
-  // Handler for back field change
-  const handleBackChange = useCallback(
-    (value: string) => {
-      setBack(value);
-      // Real-time validation
-      const error = validateBack(value);
-      setValidationErrors((prev) => ({ ...prev, back: error }));
-    },
-    [validateBack]
-  );
-
-  // Check if form is valid
-  const isValid = useMemo(() => {
-    return !validateFront(front) && !validateBack(back);
-  }, [front, back, validateFront, validateBack]);
+  }, [mode, flashcardId, fetchFlashcardData]);
 
   // Submit form
-  const handleSubmit = useCallback(
-    async (event: React.FormEvent) => {
-      event.preventDefault();
+  const handleSubmit = form.handleSubmit(async (data: FlashcardFormData) => {
+    setIsLoading(true);
 
-      // Validate before submission
-      const frontError = validateFront(front);
-      const backError = validateBack(back);
+    const result = mode === "create" ? await createFlashcard(data) : await updateFlashcard(flashcardId ?? 0, data);
 
-      if (frontError || backError) {
-        setValidationErrors({ front: frontError, back: backError });
-        return;
+    setIsLoading(false);
+
+    if (result.success) {
+      // Redirect to flashcard list or call onSuccess callback
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        // Redirect to flashcards list
+        setTimeout(() => {
+          window.location.assign("/app/flashcards");
+        }, 100);
       }
-
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        if (mode === "create") {
-          // Create new flashcard
-          const command: CreateFlashcardCommand = { front, back };
-          const response = await fetch("/api/flashcards", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(command),
-          });
-
-          if (!response.ok) {
-            if (response.status === 401) {
-              window.location.href = "/";
-              throw new Error("Sesja wygasła. Zaloguj się ponownie.");
-            }
-            if (response.status === 400) {
-              const errorData: ApiErrorDTO = await response.json();
-              if (errorData.error.code === "VALIDATION_ERROR" && errorData.error.details) {
-                const details = errorData.error.details as ValidationErrorDetailDTO[];
-                const errors: Record<string, string> = {};
-                details.forEach((detail) => {
-                  errors[detail.field] = detail.message;
-                });
-                setValidationErrors(errors as { front?: string; back?: string });
-                return;
-              }
-            }
-            throw new Error("Błąd podczas tworzenia fiszki");
-          }
-
-          toast.success("Fiszka została utworzona");
-        } else {
-          // Update existing flashcard
-          const command: UpdateFlashcardCommand = { front, back };
-          const response = await fetch(`/api/flashcards/${flashcardId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(command),
-          });
-
-          if (!response.ok) {
-            if (response.status === 401) {
-              window.location.href = "/";
-              throw new Error("Sesja wygasła. Zaloguj się ponownie.");
-            }
-            if (response.status === 404) {
-              throw new Error("Nie znaleziono fiszki");
-            }
-            if (response.status === 400) {
-              const errorData: ApiErrorDTO = await response.json();
-              if (errorData.error.code === "VALIDATION_ERROR" && errorData.error.details) {
-                const details = errorData.error.details as ValidationErrorDetailDTO[];
-                const errors: Record<string, string> = {};
-                details.forEach((detail) => {
-                  errors[detail.field] = detail.message;
-                });
-                setValidationErrors(errors as { front?: string; back?: string });
-                return;
-              }
-            }
-            throw new Error("Błąd podczas aktualizacji fiszki");
-          }
-
-          toast.success("Fiszka została zaktualizowana");
-        }
-
-        // Redirect to flashcard list or call onSuccess callback
-        if (onSuccess) {
-          onSuccess();
-        } else if (typeof window !== "undefined") {
-          window.location.href = "/app/flashcards";
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Nieznany błąd";
-        setError(errorMessage);
-        toast.error(mode === "create" ? "Nie udało się utworzyć fiszki" : "Nie udało się zaktualizować fiszki");
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [mode, front, back, flashcardId, validateFront, validateBack, onSuccess]
-  );
+    } else if (result.validationErrors) {
+      // Set server-side validation errors
+      Object.entries(result.validationErrors).forEach(([field, message]) => {
+        form.setError(field as keyof FlashcardFormData, {
+          type: "server",
+          message: message as string,
+        });
+      });
+    }
+  });
 
   // Cancel - return to list
-  const handleCancel = useCallback(() => {
-    if (typeof window !== "undefined") {
-      window.location.href = "/app/flashcards";
-    }
-  }, []);
+  const handleCancel = () => {
+    window.location.assign("/app/flashcards");
+  };
 
   return {
-    front,
-    back,
+    form,
     isLoading,
-    error,
-    validationErrors,
-    isValid,
-    handleFrontChange,
-    handleBackChange,
     handleSubmit,
     handleCancel,
   };

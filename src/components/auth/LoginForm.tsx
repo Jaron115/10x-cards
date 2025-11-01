@@ -1,168 +1,68 @@
-import { useState } from "react";
-import type { LoginFormData, LoginFormErrors } from "@/types";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginFormSchema, type LoginFormData } from "@/lib/schemas/auth.schemas";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { validateEmail, validateLoginPassword } from "@/lib/validation/auth.validation";
+import { FormField } from "@/components/forms/FormField";
 import { useAuth } from "./useAuth";
 
 /**
  * Formularz logowania z walidacją po stronie klienta
+ * Używa react-hook-form + zod do walidacji
  * Zintegrowany z useAuth hook dla komunikacji z API
  */
 export function LoginForm() {
   const { login, isLoading } = useAuth();
 
-  const [formData, setFormData] = useState<LoginFormData>({
-    email: "",
-    password: "",
+  const methods = useForm<LoginFormData>({
+    resolver: zodResolver(loginFormSchema),
+    mode: "onBlur",
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
 
-  const [validationErrors, setValidationErrors] = useState<LoginFormErrors>({});
-
-  /**
-   * Walidacja pojedynczego pola
-   */
-  const validateField = (field: keyof LoginFormData): void => {
-    let error: string | undefined;
-
-    if (field === "email") {
-      error = validateEmail(formData.email);
-    } else if (field === "password") {
-      error = validateLoginPassword(formData.password);
-    }
-
-    setValidationErrors((prev) => ({
-      ...prev,
-      [field]: error,
-    }));
-  };
-
-  /**
-   * Walidacja całego formularza
-   * @returns true jeśli formularz jest poprawny
-   */
-  const validateForm = (): boolean => {
-    const emailError = validateEmail(formData.email);
-    const passwordError = validateLoginPassword(formData.password);
-
-    setValidationErrors({
-      email: emailError,
-      password: passwordError,
-    });
-
-    return !emailError && !passwordError;
-  };
-
-  /**
-   * Obsługa zmiany wartości pola
-   */
-  const handleChange = (field: keyof LoginFormData, value: string): void => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-
-    // Czyści błąd dla edytowanego pola
-    if (validationErrors[field]) {
-      setValidationErrors((prev) => ({
-        ...prev,
-        [field]: undefined,
-      }));
-    }
-  };
-
-  /**
-   * Obsługa zdarzenia blur (opuszczenie pola)
-   */
-  const handleBlur = (field: keyof LoginFormData): void => {
-    validateField(field);
-  };
+  const {
+    handleSubmit,
+    formState: { isValid, isSubmitted },
+  } = methods;
 
   /**
    * Obsługa wysłania formularza
    */
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
-
-    const isValid = validateForm();
-
-    if (isValid) {
-      // Call login API
-      await login(formData);
-      // Note: Redirect and toast handled by useAuth hook
-    }
-  };
-
-  /**
-   * Sprawdza czy formularz jest poprawny (dla stanu przycisku submit)
-   */
-  const isFormValid = (): boolean => {
-    // Sprawdza czy wszystkie pola są wypełnione
-    const allFieldsFilled = formData.email.trim() !== "" && formData.password !== "";
-
-    // Sprawdza poprawność bezpośrednio (bez ustawiania błędów w stanie)
-    const isEmailValid = !validateEmail(formData.email);
-    const isPasswordValid = !validateLoginPassword(formData.password);
-
-    return allFieldsFilled && isEmailValid && isPasswordValid;
+  const onSubmit = async (data: LoginFormData): Promise<void> => {
+    await login(data);
+    // Note: Redirect and toast handled by useAuth hook
   };
 
   return (
-    <form data-testid="login-form" onSubmit={handleSubmit} className="space-y-4">
-      {/* Pole email */}
-      <div className="space-y-2">
-        <Label htmlFor="login-email">Email</Label>
-        <Input
-          data-testid="login-email-input"
-          id="login-email"
-          type="email"
-          value={formData.email}
-          onChange={(e) => handleChange("email", e.target.value)}
-          onBlur={() => handleBlur("email")}
-          aria-invalid={!!validationErrors.email}
-          aria-describedby={validationErrors.email ? "login-email-error" : undefined}
-          className={validationErrors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
-          placeholder="twoj@email.pl"
-        />
-        {validationErrors.email && (
-          <p id="login-email-error" className="text-sm text-red-500" role="alert">
-            {validationErrors.email}
-          </p>
-        )}
-      </div>
+    <FormProvider {...methods}>
+      <form data-testid="login-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* Pole email */}
+        <FormField name="email" label="Email" type="email" placeholder="twoj@email.pl" testId="login-email-input" />
 
-      {/* Pole hasło */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="login-password">Hasło</Label>
-          <a href="/auth/reset-password" className="text-sm text-primary hover:underline">
-            Nie pamiętam hasła
-          </a>
+        {/* Pole hasło z linkiem resetowania */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <Label htmlFor="form-field-password">Hasło</Label>
+            <a href="/auth/reset-password" className="text-sm text-primary hover:underline">
+              Nie pamiętam hasła
+            </a>
+          </div>
+          <FormField name="password" type="password" placeholder="••••••••" testId="login-password-input" />
         </div>
-        <Input
-          data-testid="login-password-input"
-          id="login-password"
-          type="password"
-          value={formData.password}
-          onChange={(e) => handleChange("password", e.target.value)}
-          onBlur={() => handleBlur("password")}
-          aria-invalid={!!validationErrors.password}
-          aria-describedby={validationErrors.password ? "login-password-error" : undefined}
-          className={validationErrors.password ? "border-red-500 focus-visible:ring-red-500" : ""}
-          placeholder="••••••••"
-        />
-        {validationErrors.password && (
-          <p id="login-password-error" className="text-sm text-red-500" role="alert">
-            {validationErrors.password}
-          </p>
-        )}
-      </div>
 
-      {/* Przycisk submit */}
-      <Button data-testid="login-submit-button" type="submit" className="w-full" disabled={!isFormValid() || isLoading}>
-        {isLoading ? "Logowanie..." : "Zaloguj się"}
-      </Button>
-    </form>
+        {/* Przycisk submit */}
+        <Button
+          data-testid="login-submit-button"
+          type="submit"
+          className="w-full"
+          disabled={(!isValid && isSubmitted) || isLoading}
+        >
+          {isLoading ? "Logowanie..." : "Zaloguj się"}
+        </Button>
+      </form>
+    </FormProvider>
   );
 }

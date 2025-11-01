@@ -15,18 +15,10 @@ interface FlashcardFormViewProps {
  * Works in two modes: "create" (new flashcard) and "edit" (existing flashcard)
  */
 export const FlashcardFormView = ({ mode, flashcardId }: FlashcardFormViewProps) => {
-  const {
-    front,
-    back,
-    isLoading,
-    error,
-    validationErrors,
-    isValid,
-    handleFrontChange,
-    handleBackChange,
-    handleSubmit,
-    handleCancel,
-  } = useFlashcardForm({ mode, flashcardId });
+  const { form, isLoading, handleSubmit, handleCancel } = useFlashcardForm({ mode, flashcardId });
+
+  const front = form.watch("front");
+  const back = form.watch("back");
 
   // Show skeleton loader while fetching flashcard in edit mode
   if (mode === "edit" && isLoading && !front && !back) {
@@ -54,27 +46,7 @@ export const FlashcardFormView = ({ mode, flashcardId }: FlashcardFormViewProps)
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      {/* Error message */}
-      {error && (
-        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg mb-6">
-          <p className="font-medium">Wystąpił błąd</p>
-          <p className="text-sm mt-1">{error}</p>
-        </div>
-      )}
-
-      {/* Form */}
-      <FlashcardForm
-        mode={mode}
-        front={front}
-        back={back}
-        validationErrors={validationErrors}
-        isLoading={isLoading}
-        isValid={isValid}
-        onFrontChange={handleFrontChange}
-        onBackChange={handleBackChange}
-        onSubmit={handleSubmit}
-        onCancel={handleCancel}
-      />
+      <FlashcardForm mode={mode} form={form} isLoading={isLoading} onSubmit={handleSubmit} onCancel={handleCancel} />
     </div>
   );
 };

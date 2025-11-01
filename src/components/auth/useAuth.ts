@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { toast } from "sonner";
 import { useAuthStore } from "@/lib/stores/authStore";
-import type { LoginFormData, RegisterFormData, ResetPasswordFormData } from "@/types";
+import { loginUser, registerUser, logoutUser, requestPasswordResetEmail } from "@/lib/api/authClient";
+import type { LoginFormData, RegisterFormData, ResetPasswordFormData } from "@/lib/schemas/auth.schemas";
 
 export interface UseAuthReturn {
   // Actions
@@ -35,48 +35,16 @@ export function useAuth(): UseAuthReturn {
     setIsLoading(true);
     setError(null);
 
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        credentials: "same-origin",
-      });
+    const result = await loginUser(data);
 
-      if (response.ok) {
-        const responseData = await response.json();
-
-        // Update auth store
-        setUser(responseData.data.user);
-
-        // Show loading toast and redirect
-        toast.loading("Logowanie...");
-
-        // Redirect to app
-        window.location.href = "/app/generator";
-
-        return { success: true };
-      } else {
-        const errorData = await response.json();
-        const errorMsg = errorData.error?.message || "Błąd logowania";
-
-        // Show error toast
-        toast.error(errorMsg);
-
-        setError(errorMsg);
-        return { success: false, error: errorMsg };
-      }
-    } catch {
-      const errorMsg = "Błąd sieci. Spróbuj ponownie.";
-
-      // Show error toast
-      toast.error(errorMsg);
-
-      setError(errorMsg);
-      return { success: false, error: errorMsg };
-    } finally {
-      setIsLoading(false);
+    if (result.success && result.data) {
+      setUser(result.data.data.user);
+    } else if (result.error) {
+      setError(result.error);
     }
+
+    setIsLoading(false);
+    return { success: result.success, error: result.error };
   };
 
   /**
@@ -88,50 +56,16 @@ export function useAuth(): UseAuthReturn {
     setIsLoading(true);
     setError(null);
 
-    try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        credentials: "same-origin",
-      });
+    const result = await registerUser(data);
 
-      if (response.ok) {
-        const responseData = await response.json();
-
-        // Update auth store
-        setUser(responseData.data.user);
-
-        // Show success toast (per user preference: Option A)
-        toast.success("Konto utworzone!");
-
-        // Auto-redirect to app (per user preference: Option A)
-        setTimeout(() => {
-          window.location.href = "/app/generator";
-        }, 500); // Small delay to let toast show
-
-        return { success: true };
-      } else {
-        const errorData = await response.json();
-        const errorMsg = errorData.error?.message || "Błąd rejestracji";
-
-        // Show error toast
-        toast.error(errorMsg);
-
-        setError(errorMsg);
-        return { success: false, error: errorMsg };
-      }
-    } catch {
-      const errorMsg = "Błąd sieci. Spróbuj ponownie.";
-
-      // Show error toast
-      toast.error(errorMsg);
-
-      setError(errorMsg);
-      return { success: false, error: errorMsg };
-    } finally {
-      setIsLoading(false);
+    if (result.success && result.data) {
+      setUser(result.data.data.user);
+    } else if (result.error) {
+      setError(result.error);
     }
+
+    setIsLoading(false);
+    return { success: result.success, error: result.error };
   };
 
   /**
@@ -141,27 +75,12 @@ export function useAuth(): UseAuthReturn {
   const logout = async () => {
     setIsLoading(true);
 
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "same-origin",
-      });
+    await logoutUser();
 
-      // Clear user from store
-      clearUser();
+    // Clear user from store (always, even on error)
+    clearUser();
 
-      // Show success toast
-      toast.success("Zostałeś wylogowany");
-
-      // Redirect to login page
-      window.location.href = "/";
-    } catch {
-      // Clear user anyway and redirect
-      clearUser();
-      window.location.href = "/";
-    } finally {
-      setIsLoading(false);
-    }
+    setIsLoading(false);
   };
 
   /**
@@ -174,42 +93,14 @@ export function useAuth(): UseAuthReturn {
     setIsLoading(true);
     setError(null);
 
-    try {
-      const response = await fetch("/api/auth/request-reset", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        credentials: "same-origin",
-      });
+    const result = await requestPasswordResetEmail(data);
 
-      if (response.ok) {
-        const responseData = await response.json();
-
-        // Show success toast
-        toast.success(responseData.data.message);
-
-        return { success: true };
-      } else {
-        const errorData = await response.json();
-        const errorMsg = errorData.error?.message || "Błąd wysyłania emaila";
-
-        // Show error toast
-        toast.error(errorMsg);
-
-        setError(errorMsg);
-        return { success: false, error: errorMsg };
-      }
-    } catch {
-      const errorMsg = "Błąd sieci. Spróbuj ponownie.";
-
-      // Show error toast
-      toast.error(errorMsg);
-
-      setError(errorMsg);
-      return { success: false, error: errorMsg };
-    } finally {
-      setIsLoading(false);
+    if (result.error) {
+      setError(result.error);
     }
+
+    setIsLoading(false);
+    return { success: result.success, error: result.error };
   };
 
   return {

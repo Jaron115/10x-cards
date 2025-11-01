@@ -1,4 +1,5 @@
-import { GenerationForm } from "./GenerationForm";
+import { useRef } from "react";
+import { GenerationForm, type GenerationFormRef } from "./GenerationForm";
 import { FlashcardProposalList } from "./FlashcardProposalList";
 import { useGenerator } from "./useGenerator";
 
@@ -7,12 +8,11 @@ import { useGenerator } from "./useGenerator";
  * Manages state and coordinates interactions between child components
  */
 export function GeneratorView() {
+  const formRef = useRef<GenerationFormRef>(null);
+
   const {
-    sourceText,
     proposals,
     status,
-    characterCount,
-    isTextValid,
     approvedCount,
     handleSourceTextChange,
     handleGenerate,
@@ -24,6 +24,12 @@ export function GeneratorView() {
   const isLoading = status === "loading";
   const isSaving = status === "saving";
 
+  const handleSave = async () => {
+    await handleSaveProposals();
+    // Reset form after successful save
+    formRef.current?.reset();
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="space-y-8">
@@ -33,12 +39,10 @@ export function GeneratorView() {
         </div>
 
         <GenerationForm
-          sourceText={sourceText}
+          ref={formRef}
           onSourceTextChange={handleSourceTextChange}
           onGenerate={handleGenerate}
           isLoading={isLoading}
-          characterCount={characterCount}
-          isTextValid={isTextValid}
         />
 
         {(proposals.length > 0 || isLoading) && (
@@ -48,7 +52,7 @@ export function GeneratorView() {
             isSaving={isSaving}
             onUpdateProposal={handleUpdateProposal}
             onSetProposalStatus={handleSetProposalStatus}
-            onSave={handleSaveProposals}
+            onSave={handleSave}
             approvedCount={approvedCount}
           />
         )}

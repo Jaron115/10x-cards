@@ -1,200 +1,79 @@
-import { useState } from "react";
-import type { RegisterFormData, RegisterFormErrors } from "@/types";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { registerFormSchema, type RegisterFormData } from "@/lib/schemas/auth.schemas";
 import { Button } from "@/components/ui/button";
-import { validateEmail, validateRegisterPassword, validateConfirmPassword } from "@/lib/validation/auth.validation";
+import { FormField } from "@/components/forms/FormField";
 import { useAuth } from "./useAuth";
 
 /**
  * Formularz rejestracji z walidacją po stronie klienta
+ * Używa react-hook-form + zod do walidacji
  * Zintegrowany z useAuth hook dla komunikacji z API
  */
 export function RegisterForm() {
-  const { register, isLoading } = useAuth();
+  const { register: registerUser, isLoading } = useAuth();
 
-  const [formData, setFormData] = useState<RegisterFormData>({
-    email: "",
-    password: "",
-    confirmPassword: "",
+  const methods = useForm<RegisterFormData>({
+    resolver: zodResolver(registerFormSchema),
+    mode: "onBlur",
+    defaultValues: {
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
   });
 
-  const [validationErrors, setValidationErrors] = useState<RegisterFormErrors>({});
-
-  /**
-   * Walidacja pojedynczego pola
-   */
-  const validateField = (field: keyof RegisterFormData): void => {
-    let error: string | undefined;
-
-    if (field === "email") {
-      error = validateEmail(formData.email);
-    } else if (field === "password") {
-      error = validateRegisterPassword(formData.password);
-    } else if (field === "confirmPassword") {
-      error = validateConfirmPassword(formData.confirmPassword, formData.password);
-    }
-
-    setValidationErrors((prev) => ({
-      ...prev,
-      [field]: error,
-    }));
-  };
-
-  /**
-   * Walidacja całego formularza
-   * @returns true jeśli formularz jest poprawny
-   */
-  const validateForm = (): boolean => {
-    const emailError = validateEmail(formData.email);
-    const passwordError = validateRegisterPassword(formData.password);
-    const confirmPasswordError = validateConfirmPassword(formData.confirmPassword, formData.password);
-
-    setValidationErrors({
-      email: emailError,
-      password: passwordError,
-      confirmPassword: confirmPasswordError,
-    });
-
-    return !emailError && !passwordError && !confirmPasswordError;
-  };
-
-  /**
-   * Obsługa zmiany wartości pola
-   */
-  const handleChange = (field: keyof RegisterFormData, value: string): void => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-
-    // Czyści błąd dla edytowanego pola
-    if (validationErrors[field]) {
-      setValidationErrors((prev) => ({
-        ...prev,
-        [field]: undefined,
-      }));
-    }
-
-    // Jeśli użytkownik edytuje hasło i pole confirmPassword ma błąd, sprawdź ponownie zgodność
-    if (field === "password" && validationErrors.confirmPassword && formData.confirmPassword) {
-      const confirmError = validateConfirmPassword(formData.confirmPassword, value);
-      setValidationErrors((prev) => ({
-        ...prev,
-        confirmPassword: confirmError,
-      }));
-    }
-  };
-
-  /**
-   * Obsługa zdarzenia blur (opuszczenie pola)
-   */
-  const handleBlur = (field: keyof RegisterFormData): void => {
-    validateField(field);
-  };
+  const {
+    handleSubmit,
+    formState: { isValid, isSubmitted },
+  } = methods;
 
   /**
    * Obsługa wysłania formularza
    */
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
-
-    const isValid = validateForm();
-
-    if (isValid) {
-      // Call register API (without confirmPassword)
-      await register({
-        email: formData.email,
-        password: formData.password,
-      });
-      // Note: Auto-redirect and toast handled by useAuth hook
-    }
-  };
-
-  /**
-   * Sprawdza czy formularz jest poprawny (dla stanu przycisku submit)
-   */
-  const isFormValid = (): boolean => {
-    // Sprawdza czy wszystkie pola są wypełnione
-    const allFieldsFilled = formData.email.trim() !== "" && formData.password !== "" && formData.confirmPassword !== "";
-
-    // Sprawdza poprawność bezpośrednio (bez ustawiania błędów w stanie)
-    const isEmailValid = !validateEmail(formData.email);
-    const isPasswordValid = !validateRegisterPassword(formData.password);
-    const isConfirmPasswordValid = !validateConfirmPassword(formData.confirmPassword, formData.password);
-
-    return allFieldsFilled && isEmailValid && isPasswordValid && isConfirmPasswordValid;
+  const onSubmit = async (data: RegisterFormData): Promise<void> => {
+    // Call register API (without confirmPassword)
+    await registerUser({
+      email: data.email,
+      password: data.password,
+    });
+    // Note: Auto-redirect and toast handled by useAuth hook
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Pole email */}
-      <div className="space-y-2">
-        <Label htmlFor="register-email">Email</Label>
-        <Input
-          id="register-email"
-          type="email"
-          value={formData.email}
-          onChange={(e) => handleChange("email", e.target.value)}
-          onBlur={() => handleBlur("email")}
-          aria-invalid={!!validationErrors.email}
-          aria-describedby={validationErrors.email ? "register-email-error" : undefined}
-          className={validationErrors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
-          placeholder="twoj@email.pl"
-        />
-        {validationErrors.email && (
-          <p id="register-email-error" className="text-sm text-red-500" role="alert">
-            {validationErrors.email}
-          </p>
-        )}
-      </div>
+    <FormProvider {...methods}>
+      <form data-testid="register-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* Pole email */}
+        <FormField name="email" label="Email" type="email" placeholder="twoj@email.pl" testId="register-email-input" />
 
-      {/* Pole hasło */}
-      <div className="space-y-2">
-        <Label htmlFor="register-password">Hasło</Label>
-        <Input
-          id="register-password"
+        {/* Pole hasło */}
+        <FormField
+          name="password"
+          label="Hasło"
           type="password"
-          value={formData.password}
-          onChange={(e) => handleChange("password", e.target.value)}
-          onBlur={() => handleBlur("password")}
-          aria-invalid={!!validationErrors.password}
-          aria-describedby={validationErrors.password ? "register-password-error" : undefined}
-          className={validationErrors.password ? "border-red-500 focus-visible:ring-red-500" : ""}
           placeholder="••••••••"
+          testId="register-password-input"
         />
-        {validationErrors.password && (
-          <p id="register-password-error" className="text-sm text-red-500" role="alert">
-            {validationErrors.password}
-          </p>
-        )}
-      </div>
 
-      {/* Pole potwierdzenia hasła */}
-      <div className="space-y-2">
-        <Label htmlFor="register-confirm-password">Powtórz hasło</Label>
-        <Input
-          id="register-confirm-password"
+        {/* Pole potwierdzenia hasła */}
+        <FormField
+          name="confirmPassword"
+          label="Powtórz hasło"
           type="password"
-          value={formData.confirmPassword}
-          onChange={(e) => handleChange("confirmPassword", e.target.value)}
-          onBlur={() => handleBlur("confirmPassword")}
-          aria-invalid={!!validationErrors.confirmPassword}
-          aria-describedby={validationErrors.confirmPassword ? "register-confirm-password-error" : undefined}
-          className={validationErrors.confirmPassword ? "border-red-500 focus-visible:ring-red-500" : ""}
           placeholder="••••••••"
+          testId="register-confirm-password-input"
         />
-        {validationErrors.confirmPassword && (
-          <p id="register-confirm-password-error" className="text-sm text-red-500" role="alert">
-            {validationErrors.confirmPassword}
-          </p>
-        )}
-      </div>
 
-      {/* Przycisk submit */}
-      <Button type="submit" className="w-full" disabled={!isFormValid() || isLoading}>
-        {isLoading ? "Rejestrowanie..." : "Zarejestruj się"}
-      </Button>
-    </form>
+        {/* Przycisk submit */}
+        <Button
+          data-testid="register-submit-button"
+          type="submit"
+          className="w-full"
+          disabled={(!isValid && isSubmitted) || isLoading}
+        >
+          {isLoading ? "Rejestrowanie..." : "Zarejestruj się"}
+        </Button>
+      </form>
+    </FormProvider>
   );
 }
