@@ -22,12 +22,31 @@ function parseValidationErrors(details: ValidationErrorDetailDTO[]): Record<stri
  * Throws HttpError with appropriate message and validation errors
  */
 export async function handleApiError(response: Response, operation: string): Promise<never> {
-  // Handle 401 Unauthorized - redirect to login
+  // Handle 401 Unauthorized
   if (response.status === 401) {
-    if (typeof window !== "undefined") {
-      window.location.href = "/";
+    try {
+      const errorData: ApiErrorDTO = await response.json();
+      const errorMessage = errorData.error.message || "Brak autoryzacji";
+
+      // Only redirect to login if it's a session expiration (not login failure)
+      // Login/register endpoints should NOT trigger redirect
+      const isAuthEndpoint = response.url.includes("/api/auth/login") || response.url.includes("/api/auth/register");
+
+      if (!isAuthEndpoint && typeof window !== "undefined") {
+        window.location.href = "/";
+      }
+
+      throw new HttpError(401, errorMessage);
+    } catch (error) {
+      if (error instanceof HttpError) {
+        throw error;
+      }
+      // Fallback for session expiration
+      if (typeof window !== "undefined") {
+        window.location.href = "/";
+      }
+      throw new HttpError(401, "Sesja wygasła. Zaloguj się ponownie.");
     }
-    throw new HttpError(401, "Sesja wygasła. Zaloguj się ponownie.");
   }
 
   // Handle 404 Not Found

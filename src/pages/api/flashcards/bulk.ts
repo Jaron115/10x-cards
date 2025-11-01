@@ -10,11 +10,7 @@
  */
 
 import type { APIContext } from "astro";
-import { z } from "zod";
-import type { ApiResponseDTO, CreateFlashcardsBulkResponseDTO } from "../../../types.ts";
-import { createErrorResponse, NotFoundError, ValidationError } from "../../../lib/errors.ts";
-import { FlashcardService } from "../../../lib/services/flashcard.service.ts";
-import { CreateFlashcardsBulkSchema } from "../../../lib/validation/flashcard.schemas.ts";
+import { BulkCreateFlashcardsHandler } from "@/lib/api-handlers/flashcards/BulkCreateFlashcardsHandler";
 
 // Disable prerendering for this API route
 export const prerender = false;
@@ -22,80 +18,6 @@ export const prerender = false;
 /**
  * POST handler for bulk flashcard creation
  */
-export async function POST({ locals, request }: APIContext): Promise<Response> {
-  try {
-    const supabase = locals.supabase;
-
-    // Initialize service
-    const flashcard_service = new FlashcardService(supabase);
-
-    // Get authenticated user from locals (set by middleware)
-    const user = locals.user;
-    if (!user) {
-      return createErrorResponse(401, "UNAUTHORIZED", "Authentication required");
-    }
-
-    const user_id = user.id;
-
-    // Parse request body
-    let body: unknown;
-    try {
-      body = await request.json();
-    } catch {
-      return createErrorResponse(400, "VALIDATION_ERROR", "Invalid JSON in request body");
-    }
-
-    // Validate request body
-    let validated_data: z.infer<typeof CreateFlashcardsBulkSchema>;
-    try {
-      validated_data = CreateFlashcardsBulkSchema.parse(body);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const details = error.errors.map((err) => ({
-          field: err.path.join("."),
-          message: err.message,
-        }));
-
-        return createErrorResponse(400, "VALIDATION_ERROR", "Validation failed", details);
-      }
-
-      return createErrorResponse(400, "VALIDATION_ERROR", "Invalid request data");
-    }
-
-    const { generation_id, flashcards } = validated_data;
-
-    // Create flashcards in bulk
-    let result: CreateFlashcardsBulkResponseDTO;
-    try {
-      result = await flashcard_service.createFlashcardsBulk(user_id, generation_id, flashcards);
-    } catch (error) {
-      // Handle specific error types
-      if (error instanceof NotFoundError) {
-        return createErrorResponse(404, "NOT_FOUND", error.message);
-      }
-
-      if (error instanceof ValidationError) {
-        return createErrorResponse(400, "VALIDATION_ERROR", error.message, error.details);
-      }
-
-      console.error("Failed to create flashcards in bulk:", error);
-      return createErrorResponse(500, "INTERNAL_ERROR", "An unexpected error occurred. Please try again later.");
-    }
-
-    // Build successful response
-    const response: ApiResponseDTO<CreateFlashcardsBulkResponseDTO> = {
-      success: true,
-      data: result,
-    };
-
-    return new Response(JSON.stringify(response), {
-      status: 201,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-  } catch (error) {
-    console.error("Unexpected error in POST /api/flashcards/bulk:", error);
-    return createErrorResponse(500, "INTERNAL_ERROR", "An unexpected error occurred. Please try again later.");
-  }
+export async function POST(context: APIContext): Promise<Response> {
+  return new BulkCreateFlashcardsHandler().handle(context);
 }
