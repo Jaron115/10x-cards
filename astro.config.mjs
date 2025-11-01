@@ -32,11 +32,15 @@ export default defineConfig({
       SUPABASE_SERVICE_ROLE_KEY: envField.string({
         context: "server",
         access: "secret",
+        optional: true,
+        default: "",
       }),
       // OpenRouter AI configuration
       OPENROUTER_API_KEY: envField.string({
         context: "server",
         access: "secret",
+        optional: true,
+        default: "mock-api-key",
       }),
       OPENROUTER_MODEL: envField.string({
         context: "server",

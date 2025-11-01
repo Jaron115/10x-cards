@@ -16,6 +16,7 @@ ALTER TABLE generation_error_logs ENABLE ROW LEVEL SECURITY;
 -- ============================================================================
 
 -- Policy: allow authenticated users to select their own flashcards
+DROP POLICY IF EXISTS "flashcards_select_own" ON flashcards;
 CREATE POLICY "flashcards_select_own"
   ON flashcards
   FOR SELECT
@@ -23,6 +24,7 @@ CREATE POLICY "flashcards_select_own"
   USING (auth.uid() = user_id);
 
 -- Policy: allow authenticated users to insert their own flashcards
+DROP POLICY IF EXISTS "flashcards_insert_own" ON flashcards;
 CREATE POLICY "flashcards_insert_own"
   ON flashcards
   FOR INSERT
@@ -30,6 +32,7 @@ CREATE POLICY "flashcards_insert_own"
   WITH CHECK (auth.uid() = user_id);
 
 -- Policy: allow authenticated users to update their own flashcards
+DROP POLICY IF EXISTS "flashcards_update_own" ON flashcards;
 CREATE POLICY "flashcards_update_own"
   ON flashcards
   FOR UPDATE
@@ -38,6 +41,7 @@ CREATE POLICY "flashcards_update_own"
   WITH CHECK (auth.uid() = user_id);
 
 -- Policy: allow authenticated users to delete their own flashcards
+DROP POLICY IF EXISTS "flashcards_delete_own" ON flashcards;
 CREATE POLICY "flashcards_delete_own"
   ON flashcards
   FOR DELETE
@@ -49,6 +53,7 @@ CREATE POLICY "flashcards_delete_own"
 -- ============================================================================
 
 -- Policy: allow authenticated users to select their own generation records
+DROP POLICY IF EXISTS "generations_select_own" ON generations;
 CREATE POLICY "generations_select_own"
   ON generations
   FOR SELECT
@@ -56,6 +61,7 @@ CREATE POLICY "generations_select_own"
   USING (auth.uid() = user_id);
 
 -- Policy: allow authenticated users to insert their own generation records
+DROP POLICY IF EXISTS "generations_insert_own" ON generations;
 CREATE POLICY "generations_insert_own"
   ON generations
   FOR INSERT
@@ -63,6 +69,7 @@ CREATE POLICY "generations_insert_own"
   WITH CHECK (auth.uid() = user_id);
 
 -- Policy: allow authenticated users to update their own generation records
+DROP POLICY IF EXISTS "generations_update_own" ON generations;
 CREATE POLICY "generations_update_own"
   ON generations
   FOR UPDATE
@@ -71,6 +78,7 @@ CREATE POLICY "generations_update_own"
   WITH CHECK (auth.uid() = user_id);
 
 -- Policy: allow authenticated users to delete their own generation records
+DROP POLICY IF EXISTS "generations_delete_own" ON generations;
 CREATE POLICY "generations_delete_own"
   ON generations
   FOR DELETE
@@ -82,6 +90,7 @@ CREATE POLICY "generations_delete_own"
 -- ============================================================================
 
 -- Policy: allow authenticated users to select their own error logs
+DROP POLICY IF EXISTS "generation_error_logs_select_own" ON generation_error_logs;
 CREATE POLICY "generation_error_logs_select_own"
   ON generation_error_logs
   FOR SELECT
@@ -90,6 +99,7 @@ CREATE POLICY "generation_error_logs_select_own"
 
 -- Policy: allow authenticated users to insert their own error logs
 -- Note: allows user_id to be null for errors that occur before user identification
+DROP POLICY IF EXISTS "generation_error_logs_insert_own" ON generation_error_logs;
 CREATE POLICY "generation_error_logs_insert_own"
   ON generation_error_logs
   FOR INSERT
@@ -97,6 +107,7 @@ CREATE POLICY "generation_error_logs_insert_own"
   WITH CHECK (auth.uid() = user_id OR user_id IS NULL);
 
 -- Policy: allow authenticated users to update their own error logs
+DROP POLICY IF EXISTS "generation_error_logs_update_own" ON generation_error_logs;
 CREATE POLICY "generation_error_logs_update_own"
   ON generation_error_logs
   FOR UPDATE
@@ -105,6 +116,7 @@ CREATE POLICY "generation_error_logs_update_own"
   WITH CHECK (auth.uid() = user_id);
 
 -- Policy: allow authenticated users to delete their own error logs
+DROP POLICY IF EXISTS "generation_error_logs_delete_own" ON generation_error_logs;
 CREATE POLICY "generation_error_logs_delete_own"
   ON generation_error_logs
   FOR DELETE

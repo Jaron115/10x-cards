@@ -87,6 +87,8 @@ export default defineConfig({
       SUPABASE_URL: process.env.SUPABASE_URL || "",
       SUPABASE_KEY: process.env.SUPABASE_KEY || "",
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+      OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || "",
+      OPENROUTER_USE_MOCK: process.env.OPENROUTER_USE_MOCK || "false",
       CI: process.env.CI || "false",
     },
   },

@@ -8,9 +8,6 @@ jobs:
     name: Lint Code
     runs-on: ubuntu-latest
 
-    env:
-      CI: true
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -31,9 +28,6 @@ jobs:
     name: Unit Tests
     needs: lint
     runs-on: ubuntu-latest
-
-    env:
-      CI: true
 
     steps:
       - name: Checkout code
@@ -58,7 +52,6 @@ jobs:
     environment: production
 
     env:
-      CI: true
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
