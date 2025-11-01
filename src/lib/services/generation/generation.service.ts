@@ -71,7 +71,7 @@ export class GenerationService {
    * @throws Error if database operation fails
    */
   async saveGeneration(userId: string, sourceText: string, result: GenerationResult): Promise<number> {
-    const sourceTextHash = calculateMD5(sourceText);
+    const sourceTextHash = await calculateMD5(sourceText);
 
     const generationData: InsertGenerationData = {
       user_id: userId,
@@ -107,7 +107,7 @@ export class GenerationService {
    */
   async logError(userId: string, sourceText: string, model: string | null, error: AIServiceError): Promise<void> {
     try {
-      const sourceTextHash = calculateMD5(sourceText);
+      const sourceTextHash = await calculateMD5(sourceText);
 
       const errorLog: InsertGenerationErrorLogData = {
         user_id: userId,
