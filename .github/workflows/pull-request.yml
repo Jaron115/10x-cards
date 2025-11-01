@@ -196,7 +196,7 @@ jobs:
 
   status-comment:
     name: Post Status Comment
-    needs: [lint, unit-test, e2e-test]
+    needs: [lint, unit-test]
     if: success() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
