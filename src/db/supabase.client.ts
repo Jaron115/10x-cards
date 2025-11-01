@@ -1,24 +1,22 @@
 import { createClient } from "@supabase/supabase-js";
+import { SUPABASE_URL, SUPABASE_KEY } from "astro:env/server";
 
 import type { Database } from "../db/database.types.ts";
-
-const supabaseUrl = import.meta.env.SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.SUPABASE_KEY;
 
 // Debug logging - always log in production to diagnose issues
 console.log("[SUPABASE CLIENT] Initializing...");
 console.log(
-  `  SUPABASE_URL: ${supabaseUrl ? `${supabaseUrl.substring(0, 20)}... (${supabaseUrl.length} chars)` : "❌ MISSING"}`
+  `  SUPABASE_URL: ${SUPABASE_URL ? `${SUPABASE_URL.substring(0, 20)}... (${SUPABASE_URL.length} chars)` : "❌ MISSING"}`
 );
 console.log(
-  `  SUPABASE_KEY: ${supabaseAnonKey ? `${supabaseAnonKey.substring(0, 10)}... (${supabaseAnonKey.length} chars)` : "❌ MISSING"}`
+  `  SUPABASE_KEY: ${SUPABASE_KEY ? `${SUPABASE_KEY.substring(0, 10)}... (${SUPABASE_KEY.length} chars)` : "❌ MISSING"}`
 );
 
-if (!supabaseUrl || !supabaseAnonKey) {
+if (!SUPABASE_URL || !SUPABASE_KEY) {
   const errorMsg =
     `Missing required environment variables:\n` +
-    `SUPABASE_URL: ${supabaseUrl ? "✓" : "✗ MISSING"}\n` +
-    `SUPABASE_KEY: ${supabaseAnonKey ? "✓" : "✗ MISSING"}\n` +
+    `SUPABASE_URL: ${SUPABASE_URL ? "✓" : "✗ MISSING"}\n` +
+    `SUPABASE_KEY: ${SUPABASE_KEY ? "✓" : "✗ MISSING"}\n` +
     `Make sure these are set in Cloudflare Pages Dashboard under Settings → Environment variables`;
   console.error("[SUPABASE CLIENT] ERROR:", errorMsg);
   throw new Error(errorMsg);
@@ -26,7 +24,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 console.log("[SUPABASE CLIENT] ✓ Environment variables found, creating client...");
 
-export const supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
+export const supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_KEY);
 
 export type SupabaseClient = typeof supabaseClient;
 

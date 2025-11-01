@@ -61,7 +61,7 @@ export async function POST({ request, locals, cookies }: APIContext): Promise<Re
   cookies.set("sb-access-token", data.session.access_token, {
     path: "/",
     httpOnly: true,
-    secure: import.meta.env.PROD,
+    secure: import.meta.env.PROD, // Built-in Astro variable, keep as is
     sameSite: "lax",
     maxAge: data.session.expires_in,
   });
@@ -69,7 +69,7 @@ export async function POST({ request, locals, cookies }: APIContext): Promise<Re
   cookies.set("sb-refresh-token", data.session.refresh_token, {
     path: "/",
     httpOnly: true,
-    secure: import.meta.env.PROD,
+    secure: import.meta.env.PROD, // Built-in Astro variable, keep as is
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 30, // 30 days
   });

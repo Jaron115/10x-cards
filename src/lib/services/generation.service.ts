@@ -3,6 +3,7 @@
  * Handles integration with Openrouter.ai API and database operations
  */
 
+import { OPENROUTER_USE_MOCK, OPENROUTER_TIMEOUT_MS } from "astro:env/server";
 import type { SupabaseClient } from "../../db/supabase.client.ts";
 import type { FlashcardProposalDTO, InsertGenerationData, InsertGenerationErrorLogData } from "../../types.ts";
 import { calculateMD5 } from "../utils/hash.ts";
@@ -42,8 +43,8 @@ export class GenerationService {
 
   constructor(private readonly supabase: SupabaseClient) {
     // Read configuration from environment
-    this.USE_MOCK = import.meta.env.OPENROUTER_USE_MOCK === "true";
-    this.TIMEOUT_MS = parseInt(import.meta.env.OPENROUTER_TIMEOUT_MS || "60000", 10);
+    this.USE_MOCK = OPENROUTER_USE_MOCK === "true";
+    this.TIMEOUT_MS = parseInt(OPENROUTER_TIMEOUT_MS, 10);
   }
 
   /**

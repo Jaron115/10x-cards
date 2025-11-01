@@ -8,6 +8,7 @@
 
 import type { APIContext } from "astro";
 import { z } from "zod";
+import { OPENROUTER_API_KEY, OPENROUTER_MODEL, OPENROUTER_USE_MOCK } from "astro:env/server";
 import type { ApiResponseDTO, GenerateFlashcardsResponseDTO, RateLimitErrorDTO } from "../../types.ts";
 import { createErrorResponse } from "../../lib/errors.ts";
 import { RateLimitService } from "../../lib/services/rateLimit.service.ts";
@@ -68,10 +69,10 @@ export async function POST({ locals, request }: APIContext): Promise<Response> {
     const { source_text } = validatedData;
 
     // Get environment variables
-    const api_key = import.meta.env.OPENROUTER_API_KEY || "";
-    const model = import.meta.env.OPENROUTER_MODEL || "openai/gpt-4o-mini";
-    const use_mock = import.meta.env.OPENROUTER_USE_MOCK === "true";
-    const skip_rate_limit = import.meta.env.OPENROUTER_USE_MOCK === "true"; // Skip rate limit in mock mode
+    const api_key = OPENROUTER_API_KEY || "";
+    const model = OPENROUTER_MODEL;
+    const use_mock = OPENROUTER_USE_MOCK === "true";
+    const skip_rate_limit = OPENROUTER_USE_MOCK === "true"; // Skip rate limit in mock mode
 
     // Check rate limit (skip in development/mock mode)
     if (!skip_rate_limit) {
