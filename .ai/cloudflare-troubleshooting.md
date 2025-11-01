@@ -104,13 +104,36 @@ adapter: cloudflare({
 
 ### Problem: "Missing required environment variables"
 
-**Przyczyna:** Zmienne środowiskowe nie są dostępne podczas builda lub runtime.
+**Przyczyna:** Zmienne środowiskowe nie są skonfigurowane w Cloudflare Pages Dashboard.
+
+⚠️ **WAŻNE**: GitHub Secrets NIE SĄ automatycznie przekazywane do Cloudflare Pages runtime!
 
 **Rozwiązanie:**
 
-1. Upewnij się, że zmienne są skonfigurowane jako GitHub Secrets
-2. Sprawdź czy workflow przekazuje zmienne do kroku `Build project`
-3. Sprawdź `astro.config.mjs` - czy `vite.define` jest poprawnie skonfigurowany
+1. **Musisz ręcznie ustawić zmienne w Cloudflare Pages Dashboard:**
+   - Przejdź do https://dash.cloudflare.com/
+   - Workers & Pages → Twój projekt
+   - Settings → Environment variables
+   - Dodaj wszystkie wymagane zmienne dla Production environment
+
+2. **Po dodaniu zmiennych wykonaj ponowny deployment:**
+   - Zmienne są ładowane tylko podczas deploymentu
+   - Uruchom ponownie workflow w GitHub Actions lub
+   - Wykonaj deployment przez Cloudflare Dashboard
+
+3. **Sprawdź szczegółowy przewodnik:**
+   - Zobacz: `.ai/QUICK-FIX-500-ERROR.md` dla krok-po-kroku instrukcji
+   - Lub użyj skryptu: `./scripts/setup-cloudflare-env.sh`
+
+**Weryfikacja:**
+
+```bash
+# Sprawdź logi w Cloudflare Dashboard
+# Powinny pokazać:
+[SUPABASE CLIENT] Environment variables check:
+SUPABASE_URL: ✓ FOUND
+SUPABASE_KEY: ✓ FOUND
+```
 
 ### Problem: "Cannot find module"
 

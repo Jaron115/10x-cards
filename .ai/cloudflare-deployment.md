@@ -71,6 +71,30 @@ W przeciwieństwie do tradycyjnych deploymentów, Cloudflare Pages **nie** używ
 
 ### Konfiguracja zmiennych w Cloudflare Pages
 
+**⚠️ KRYTYCZNE: To musi być wykonane PRZED pierwszym deploymentem!**
+
+Masz dwie opcje:
+
+#### Opcja 1: Automatycznie przez skrypt (zalecane)
+
+```bash
+# 1. Ustaw zmienne lokalne
+export CLOUDFLARE_API_TOKEN="twój_token"
+export CLOUDFLARE_ACCOUNT_ID="twoje_account_id"
+export CLOUDFLARE_PROJECT_NAME="nazwa_projektu"
+export SUPABASE_URL="twój_supabase_url"
+export SUPABASE_KEY="twój_supabase_key"
+export SUPABASE_SERVICE_ROLE_KEY="twój_service_role_key"
+export OPENROUTER_API_KEY="twój_openrouter_key"  # opcjonalnie
+export OPENROUTER_MODEL="twój_model"  # opcjonalnie
+
+# 2. Uruchom skrypt
+chmod +x scripts/setup-cloudflare-env.sh
+./scripts/setup-cloudflare-env.sh
+```
+
+#### Opcja 2: Ręcznie przez Dashboard
+
 1. Zaloguj się do [Cloudflare Dashboard](https://dash.cloudflare.com/)
 2. Przejdź do **Workers & Pages**
 3. Wybierz swój projekt
@@ -81,6 +105,8 @@ W przeciwieństwie do tradycyjnych deploymentów, Cloudflare Pages **nie** używ
    - `SUPABASE_SERVICE_ROLE_KEY` - Klucz service role do Supabase
    - `OPENROUTER_API_KEY` - (opcjonalnie) Klucz API do Openrouter.ai
    - `OPENROUTER_MODEL` - (opcjonalnie) Model AI do użycia
+6. **Zapisz zmiany**
+7. **Wykonaj ponowny deployment** (zmienne są dostępne dopiero po ponownym deploymencie)
 
 ### Jak Astro + Cloudflare obsługuje zmienne?
 
