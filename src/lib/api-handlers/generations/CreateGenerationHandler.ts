@@ -23,7 +23,8 @@ import { AuthenticatedHandler } from "../base/AuthenticatedHandler";
 import type { AuthenticatedContext } from "../types";
 import { validateBody } from "../middleware/validation";
 import { GenerateFlashcardsSchema } from "@/lib/validation/generation.schemas";
-import { GenerationService, AIServiceError } from "@/lib/services/generation.service";
+import { GenerationService } from "@/lib/services/generation/generation.service";
+import { AIServiceError } from "@/lib/services/generation/types";
 import { RateLimitService } from "@/lib/services/rateLimit.service";
 import { ApiResponseBuilder } from "../utils/responseBuilder";
 

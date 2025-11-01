@@ -5,7 +5,7 @@
 
 import { AuthenticatedHandler } from "../base/AuthenticatedHandler";
 import type { AuthenticatedContext } from "../types";
-import { FlashcardService } from "@/lib/services/flashcard.service";
+import { FlashcardService } from "@/lib/services/flashcard/flashcard.service";
 import { validateQuery } from "../middleware/validation";
 import { GetFlashcardsQuerySchema } from "@/lib/validation/flashcard.schemas";
 import type { APIContext } from "astro";

@@ -24,7 +24,7 @@
 import type { APIContext } from "astro";
 import { ApiResponseBuilder } from "../utils/responseBuilder";
 import { NotFoundError, ValidationError as CustomValidationError } from "@/lib/errors";
-import { AIServiceError } from "@/lib/services/generation.service";
+import { AIServiceError } from "@/lib/services/generation/types";
 
 /**
  * Map known error types to appropriate HTTP responses

@@ -3,7 +3,7 @@
  * Implements daily rate limits to control AI API costs and prevent abuse
  */
 
-import type { SupabaseClient } from "../../db/supabase.client.ts";
+import type { SupabaseClient } from "../../db/supabase.client";
 
 /**
  * Rate limit check result

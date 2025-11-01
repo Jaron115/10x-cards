@@ -3,23 +3,25 @@
  * Handles database interactions for flashcards with proper validation and error handling
  */
 
-import type { SupabaseClient } from "../../db/supabase.client.ts";
+import type { SupabaseClient } from "@/db/supabase.client";
 import type {
   FlashcardDTO,
-  FlashcardEntity,
   GetFlashcardsResponseDTO,
   InsertFlashcardData,
-  UpdateFlashcardData,
   CreateFlashcardsBulkResponseDTO,
-  PaginationDTO,
-} from "../../types.ts";
-import { NotFoundError, ValidationError } from "../errors.ts";
+} from "@/types";
+import { NotFoundError } from "../../errors";
 import type {
   ValidatedCreateFlashcardCommand,
   ValidatedUpdateFlashcardCommand,
   ValidatedFlashcardBulkItem,
   ValidatedGetFlashcardsQuery,
-} from "../validation/flashcard.schemas.ts";
+} from "../../validation/flashcard.schemas";
+import { FlashcardQueryBuilder } from "./builders/FlashcardQueryBuilder";
+import { calculateOffset, calculatePagination } from "./utils/PaginationCalculator";
+import { entityToDTO, entitiesToDTOs } from "./mappers/FlashcardMapper";
+import { BulkFlashcardOrchestrator } from "./orchestrators/BulkFlashcardOrchestrator";
+import { mapUpdateCommandToUpdateData } from "./mappers/FlashcardUpdateMapper";
 
 /**
  * Flashcard service class
@@ -39,42 +41,24 @@ export class FlashcardService {
     const { page, limit, source, sort, order } = query_params;
 
     // Calculate offset for pagination
-    const offset = (page - 1) * limit;
+    const offset = calculateOffset(page, limit);
 
-    // Build base query
-    let query = this.supabase.from("flashcards").select("*", { count: "exact" }).eq("user_id", user_id);
+    // Build and execute query using Fluent API
+    const queryBuilder = new FlashcardQueryBuilder(this.supabase);
+    const { data, count } = await queryBuilder.executeWithParams({
+      userId: user_id,
+      source,
+      sort,
+      order,
+      limit,
+      offset,
+    });
 
-    // Apply source filter if provided
-    if (source) {
-      query = query.eq("source", source);
-    }
-
-    // Apply sorting
-    query = query.order(sort, { ascending: order === "asc" });
-
-    // Apply pagination
-    query = query.range(offset, offset + limit - 1);
-
-    // Execute query
-    const { data, error, count } = await query;
-
-    if (error) {
-      throw new Error(`Failed to fetch flashcards: ${error.message}`);
-    }
-
-    // Transform entities to DTOs (exclude user_id)
-    const flashcards: FlashcardDTO[] = (data || []).map((entity) => this.entityToDTO(entity));
+    // Transform entities to DTOs
+    const flashcards = entitiesToDTOs(data);
 
     // Calculate pagination metadata
-    const total = count || 0;
-    const total_pages = Math.ceil(total / limit);
-
-    const pagination: PaginationDTO = {
-      page,
-      limit,
-      total,
-      total_pages,
-    };
+    const pagination = calculatePagination(page, limit, count || 0);
 
     return {
       flashcards,
@@ -102,7 +86,7 @@ export class FlashcardService {
       throw new NotFoundError("Flashcard not found");
     }
 
-    return this.entityToDTO(data);
+    return entityToDTO(data);
   }
 
   /**
@@ -131,11 +115,12 @@ export class FlashcardService {
       throw new Error("No flashcard data returned from database");
     }
 
-    return this.entityToDTO(data);
+    return entityToDTO(data);
   }
 
   /**
    * Create multiple flashcards at once (from AI generation)
+   * Delegates to BulkFlashcardOrchestrator for complex orchestration
    * @param user_id - User ID who creates the flashcards
    * @param generation_id - ID of the generation session
    * @param flashcards - Array of flashcard data to create
@@ -149,87 +134,8 @@ export class FlashcardService {
     generation_id: number,
     flashcards: ValidatedFlashcardBulkItem[]
   ): Promise<CreateFlashcardsBulkResponseDTO> {
-    // 1. Verify generation exists and belongs to user
-    const { data: generation, error: generation_error } = await this.supabase
-      .from("generations")
-      .select("*")
-      .eq("id", generation_id)
-      .eq("user_id", user_id)
-      .single();
-
-    if (generation_error || !generation) {
-      throw new NotFoundError("Generation not found");
-    }
-
-    // 2. Count new flashcards by source
-    const new_ai_full_count = flashcards.filter((f) => f.source === "ai-full").length;
-    const new_ai_edited_count = flashcards.filter((f) => f.source === "ai-edited").length;
-
-    // 3. Calculate total accepted count after this operation
-    const current_accepted = generation.accepted_unedited_count + generation.accepted_edited_count;
-    const total_after_bulk = current_accepted + flashcards.length;
-
-    // 4. Validate: total accepted cannot exceed generated_count
-    if (total_after_bulk > generation.generated_count) {
-      throw new ValidationError(
-        `Cannot accept more flashcards than generated. Generated: ${generation.generated_count}, Already accepted: ${current_accepted}, Trying to add: ${flashcards.length}`,
-        {
-          generated_count: generation.generated_count,
-          current_accepted_count: current_accepted,
-          requested_count: flashcards.length,
-          available_slots: generation.generated_count - current_accepted,
-        }
-      );
-    }
-
-    // 5. Prepare insert data
-    const insert_data: InsertFlashcardData[] = flashcards.map((flashcard) => ({
-      user_id,
-      front: flashcard.front,
-      back: flashcard.back,
-      source: flashcard.source,
-      generation_id,
-    }));
-
-    // 6. Insert flashcards
-    const { data: created_flashcards, error: insert_error } = await this.supabase
-      .from("flashcards")
-      .insert(insert_data)
-      .select("*");
-
-    if (insert_error) {
-      throw new Error(`Failed to create flashcards: ${insert_error.message}`);
-    }
-
-    if (!created_flashcards || created_flashcards.length === 0) {
-      throw new Error("No flashcards were created");
-    }
-
-    // 7. Update generation record with new accepted counts
-    const updated_unedited_count = generation.accepted_unedited_count + new_ai_full_count;
-    const updated_edited_count = generation.accepted_edited_count + new_ai_edited_count;
-
-    const { error: update_error } = await this.supabase
-      .from("generations")
-      .update({
-        accepted_unedited_count: updated_unedited_count,
-        accepted_edited_count: updated_edited_count,
-      })
-      .eq("id", generation_id);
-
-    if (update_error) {
-      // This is a critical error - flashcards were created but generation wasn't updated
-      console.error("Failed to update generation counts:", update_error);
-      throw new Error(`Failed to update generation counts: ${update_error.message}`);
-    }
-
-    // 8. Transform entities to DTOs
-    const flashcard_dtos = created_flashcards.map((entity) => this.entityToDTO(entity));
-
-    return {
-      created_count: created_flashcards.length,
-      flashcards: flashcard_dtos,
-    };
+    const orchestrator = new BulkFlashcardOrchestrator(this.supabase);
+    return orchestrator.execute(user_id, generation_id, flashcards);
   }
 
   /**
@@ -259,31 +165,10 @@ export class FlashcardService {
       throw new NotFoundError("Flashcard not found");
     }
 
-    // 2. Prepare update data
-    const update_data: UpdateFlashcardData = {};
+    // 2. Prepare update data with automatic source transitions
+    const update_data = mapUpdateCommandToUpdateData(existing, command);
 
-    if (command.front !== undefined) {
-      update_data.front = command.front;
-    }
-
-    if (command.back !== undefined) {
-      update_data.back = command.back;
-    }
-
-    // 3. Apply source transition logic
-    // If flashcard was ai-full and content changed, transition to ai-edited
-    if (existing.source === "ai-full") {
-      const content_changed =
-        (command.front !== undefined && command.front !== existing.front) ||
-        (command.back !== undefined && command.back !== existing.back);
-
-      if (content_changed) {
-        update_data.source = "ai-edited";
-      }
-    }
-    // For "manual" and "ai-edited", source stays the same (no explicit assignment needed)
-
-    // 4. Execute update
+    // 3. Execute update
     const { data: updated, error: update_error } = await this.supabase
       .from("flashcards")
       .update(update_data)
@@ -296,7 +181,7 @@ export class FlashcardService {
       throw new Error(`Failed to update flashcard: ${update_error?.message || "Unknown error"}`);
     }
 
-    return this.entityToDTO(updated);
+    return entityToDTO(updated);
   }
 
   /**
@@ -326,17 +211,5 @@ export class FlashcardService {
     if (error) {
       throw new Error(`Failed to delete flashcard: ${error.message}`);
     }
-  }
-
-  /**
-   * Transform FlashcardEntity to FlashcardDTO
-   * Removes user_id from the response for security
-   * @param entity - Flashcard entity from database
-   * @returns Flashcard DTO
-   */
-  private entityToDTO(entity: FlashcardEntity): FlashcardDTO {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { user_id, ...dto } = entity;
-    return dto;
   }
 }

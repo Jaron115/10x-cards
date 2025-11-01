@@ -6,7 +6,7 @@
 import { CreateHandler } from "../base/CrudHandlers";
 import type { AuthenticatedContext } from "../types";
 import type { CreateFlashcardsBulkResponseDTO } from "@/types";
-import { FlashcardService } from "@/lib/services/flashcard.service";
+import { FlashcardService } from "@/lib/services/flashcard/flashcard.service";
 import { CreateFlashcardsBulkSchema } from "@/lib/validation/flashcard.schemas";
 import type { z } from "zod";
 
