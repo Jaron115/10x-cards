@@ -69,3 +69,13 @@ export const validateConfirmPassword = (confirmPassword: string, password: strin
 
   return undefined;
 };
+
+/**
+ * Walidacja hasła dla formularza aktualizacji hasła
+ * Używa tych samych reguł co przy rejestracji (minimum 6 znaków)
+ * @param password - Hasło do walidacji
+ * @returns Komunikat błędu lub undefined jeśli hasło jest poprawne
+ */
+export const validateUpdatePassword = (password: string): string | undefined => {
+  return validateRegisterPassword(password);
+};

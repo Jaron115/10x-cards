@@ -526,6 +526,36 @@ export interface RegisterFormErrors {
   confirmPassword?: string;
 }
 
+/**
+ * Dane formularza żądania resetu hasła
+ */
+export interface ResetPasswordFormData {
+  email: string;
+}
+
+/**
+ * Błędy walidacji formularza żądania resetu hasła
+ */
+export interface ResetPasswordFormErrors {
+  email?: string;
+}
+
+/**
+ * Dane formularza aktualizacji hasła
+ */
+export interface UpdatePasswordFormData {
+  password: string;
+  confirmPassword: string;
+}
+
+/**
+ * Błędy walidacji formularza aktualizacji hasła
+ */
+export interface UpdatePasswordFormErrors {
+  password?: string;
+  confirmPassword?: string;
+}
+
 // ============================================================================
 // Auth API Types
 // ============================================================================
@@ -581,5 +611,33 @@ export interface GetCurrentUserResponseDTO {
  */
 export interface LogoutResponseDTO {
   success: true;
+  message: string;
+}
+
+/**
+ * Request body for password reset request
+ */
+export interface ResetPasswordRequest {
+  email: string;
+}
+
+/**
+ * Response for successful password reset request
+ */
+export interface ResetPasswordResponseDTO {
+  message: string;
+}
+
+/**
+ * Request body for updating password
+ */
+export interface UpdatePasswordRequest {
+  password: string;
+}
+
+/**
+ * Response for successful password update
+ */
+export interface UpdatePasswordResponseDTO {
   message: string;
 }

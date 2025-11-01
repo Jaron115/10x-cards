@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/lib/stores/authStore";
-import type { LoginFormData, RegisterFormData } from "@/types";
+import type { LoginFormData, RegisterFormData, ResetPasswordFormData } from "@/types";
 
 export interface UseAuthReturn {
   // Actions
   login: (data: LoginFormData) => Promise<{ success: boolean; error?: string }>;
   register: (data: Omit<RegisterFormData, "confirmPassword">) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
+  requestPasswordReset: (data: ResetPasswordFormData) => Promise<{ success: boolean; error?: string }>;
 
   // States
   isLoading: boolean;
@@ -154,12 +155,58 @@ export function useAuth(): UseAuthReturn {
 
       // Redirect to login page
       window.location.href = "/";
-    } catch (error) {
-      console.error("[AUTH] Logout error:", error);
-
+    } catch {
       // Clear user anyway and redirect
       clearUser();
       window.location.href = "/";
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Request password reset
+   * Sends email with password reset link
+   * On success: shows success toast with instructions
+   * On error: shows error toast
+   */
+  const requestPasswordReset = async (data: ResetPasswordFormData) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/auth/request-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "same-origin",
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+
+        // Show success toast
+        toast.success(responseData.data.message);
+
+        return { success: true };
+      } else {
+        const errorData = await response.json();
+        const errorMsg = errorData.error?.message || "Błąd wysyłania emaila";
+
+        // Show error toast
+        toast.error(errorMsg);
+
+        setError(errorMsg);
+        return { success: false, error: errorMsg };
+      }
+    } catch {
+      const errorMsg = "Błąd sieci. Spróbuj ponownie.";
+
+      // Show error toast
+      toast.error(errorMsg);
+
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
     } finally {
       setIsLoading(false);
     }
@@ -169,6 +216,7 @@ export function useAuth(): UseAuthReturn {
     login,
     register,
     logout,
+    requestPasswordReset,
     isLoading,
     error,
   };

@@ -1,36 +1,40 @@
 import { useState } from "react";
-import type { RegisterFormData, RegisterFormErrors } from "@/types";
+import type { UpdatePasswordFormData, UpdatePasswordFormErrors } from "@/types";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { validateEmail, validateRegisterPassword, validateConfirmPassword } from "@/lib/validation/auth.validation";
-import { useAuth } from "./useAuth";
+import { validateUpdatePassword, validateConfirmPassword } from "@/lib/validation/auth.validation";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/db/database.types";
+import { toast } from "sonner";
+
+interface UpdatePasswordFormProps {
+  supabaseClient: SupabaseClient<Database>;
+}
 
 /**
- * Formularz rejestracji z walidacją po stronie klienta
- * Zintegrowany z useAuth hook dla komunikacji z API
+ * Formularz aktualizacji hasła
+ * Używany po kliknięciu w link resetujący hasło z emaila
+ * Aktualizacja hasła odbywa się bezpośrednio przez klienta Supabase (client-side)
  */
-export function RegisterForm() {
-  const { register, isLoading } = useAuth();
+export function UpdatePasswordForm({ supabaseClient }: UpdatePasswordFormProps) {
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [formData, setFormData] = useState<RegisterFormData>({
-    email: "",
+  const [formData, setFormData] = useState<UpdatePasswordFormData>({
     password: "",
     confirmPassword: "",
   });
 
-  const [validationErrors, setValidationErrors] = useState<RegisterFormErrors>({});
+  const [validationErrors, setValidationErrors] = useState<UpdatePasswordFormErrors>({});
 
   /**
    * Walidacja pojedynczego pola
    */
-  const validateField = (field: keyof RegisterFormData): void => {
+  const validateField = (field: keyof UpdatePasswordFormData): void => {
     let error: string | undefined;
 
-    if (field === "email") {
-      error = validateEmail(formData.email);
-    } else if (field === "password") {
-      error = validateRegisterPassword(formData.password);
+    if (field === "password") {
+      error = validateUpdatePassword(formData.password);
     } else if (field === "confirmPassword") {
       error = validateConfirmPassword(formData.confirmPassword, formData.password);
     }
@@ -46,23 +50,21 @@ export function RegisterForm() {
    * @returns true jeśli formularz jest poprawny
    */
   const validateForm = (): boolean => {
-    const emailError = validateEmail(formData.email);
-    const passwordError = validateRegisterPassword(formData.password);
+    const passwordError = validateUpdatePassword(formData.password);
     const confirmPasswordError = validateConfirmPassword(formData.confirmPassword, formData.password);
 
     setValidationErrors({
-      email: emailError,
       password: passwordError,
       confirmPassword: confirmPasswordError,
     });
 
-    return !emailError && !passwordError && !confirmPasswordError;
+    return !passwordError && !confirmPasswordError;
   };
 
   /**
    * Obsługa zmiany wartości pola
    */
-  const handleChange = (field: keyof RegisterFormData, value: string): void => {
+  const handleChange = (field: keyof UpdatePasswordFormData, value: string): void => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -89,7 +91,7 @@ export function RegisterForm() {
   /**
    * Obsługa zdarzenia blur (opuszczenie pola)
    */
-  const handleBlur = (field: keyof RegisterFormData): void => {
+  const handleBlur = (field: keyof UpdatePasswordFormData): void => {
     validateField(field);
   };
 
@@ -101,13 +103,35 @@ export function RegisterForm() {
 
     const isValid = validateForm();
 
-    if (isValid) {
-      // Call register API (without confirmPassword)
-      await register({
-        email: formData.email,
+    if (!isValid) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Aktualizuj hasło bezpośrednio przez klienta Supabase
+      // Sesja jest już ustawiona w usePasswordReset hook
+      const { error } = await supabaseClient.auth.updateUser({
         password: formData.password,
       });
-      // Note: Auto-redirect and toast handled by useAuth hook
+
+      if (error) {
+        toast.error("Nie udało się zmienić hasła. Spróbuj ponownie lub zażądaj nowego linku.");
+        return;
+      }
+
+      // Sukces
+      toast.success("Hasło zostało zmienione pomyślnie!");
+
+      // Przekieruj do strony logowania po krótkiej przerwie
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
+    } catch {
+      toast.error("Wystąpił nieoczekiwany błąd. Spróbuj ponownie.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -116,55 +140,34 @@ export function RegisterForm() {
    */
   const isFormValid = (): boolean => {
     // Sprawdza czy wszystkie pola są wypełnione
-    const allFieldsFilled = formData.email.trim() !== "" && formData.password !== "" && formData.confirmPassword !== "";
+    const allFieldsFilled = formData.password !== "" && formData.confirmPassword !== "";
 
     // Sprawdza poprawność bezpośrednio (bez ustawiania błędów w stanie)
-    const isEmailValid = !validateEmail(formData.email);
-    const isPasswordValid = !validateRegisterPassword(formData.password);
+    const isPasswordValid = !validateUpdatePassword(formData.password);
     const isConfirmPasswordValid = !validateConfirmPassword(formData.confirmPassword, formData.password);
 
-    return allFieldsFilled && isEmailValid && isPasswordValid && isConfirmPasswordValid;
+    return allFieldsFilled && isPasswordValid && isConfirmPasswordValid;
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Pole email */}
+    <form data-testid="update-password-form" onSubmit={handleSubmit} className="space-y-4">
+      {/* Pole nowego hasła */}
       <div className="space-y-2">
-        <Label htmlFor="register-email">Email</Label>
+        <Label htmlFor="update-password">Nowe hasło</Label>
         <Input
-          id="register-email"
-          type="email"
-          value={formData.email}
-          onChange={(e) => handleChange("email", e.target.value)}
-          onBlur={() => handleBlur("email")}
-          aria-invalid={!!validationErrors.email}
-          aria-describedby={validationErrors.email ? "register-email-error" : undefined}
-          className={validationErrors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
-          placeholder="twoj@email.pl"
-        />
-        {validationErrors.email && (
-          <p id="register-email-error" className="text-sm text-red-500" role="alert">
-            {validationErrors.email}
-          </p>
-        )}
-      </div>
-
-      {/* Pole hasło */}
-      <div className="space-y-2">
-        <Label htmlFor="register-password">Hasło</Label>
-        <Input
-          id="register-password"
+          data-testid="update-password-input"
+          id="update-password"
           type="password"
           value={formData.password}
           onChange={(e) => handleChange("password", e.target.value)}
           onBlur={() => handleBlur("password")}
           aria-invalid={!!validationErrors.password}
-          aria-describedby={validationErrors.password ? "register-password-error" : undefined}
+          aria-describedby={validationErrors.password ? "update-password-error" : undefined}
           className={validationErrors.password ? "border-red-500 focus-visible:ring-red-500" : ""}
           placeholder="••••••••"
         />
         {validationErrors.password && (
-          <p id="register-password-error" className="text-sm text-red-500" role="alert">
+          <p id="update-password-error" className="text-sm text-red-500" role="alert">
             {validationErrors.password}
           </p>
         )}
@@ -172,28 +175,34 @@ export function RegisterForm() {
 
       {/* Pole potwierdzenia hasła */}
       <div className="space-y-2">
-        <Label htmlFor="register-confirm-password">Powtórz hasło</Label>
+        <Label htmlFor="update-confirm-password">Powtórz nowe hasło</Label>
         <Input
-          id="register-confirm-password"
+          data-testid="update-confirm-password-input"
+          id="update-confirm-password"
           type="password"
           value={formData.confirmPassword}
           onChange={(e) => handleChange("confirmPassword", e.target.value)}
           onBlur={() => handleBlur("confirmPassword")}
           aria-invalid={!!validationErrors.confirmPassword}
-          aria-describedby={validationErrors.confirmPassword ? "register-confirm-password-error" : undefined}
+          aria-describedby={validationErrors.confirmPassword ? "update-confirm-password-error" : undefined}
           className={validationErrors.confirmPassword ? "border-red-500 focus-visible:ring-red-500" : ""}
           placeholder="••••••••"
         />
         {validationErrors.confirmPassword && (
-          <p id="register-confirm-password-error" className="text-sm text-red-500" role="alert">
+          <p id="update-confirm-password-error" className="text-sm text-red-500" role="alert">
             {validationErrors.confirmPassword}
           </p>
         )}
       </div>
 
       {/* Przycisk submit */}
-      <Button type="submit" className="w-full" disabled={!isFormValid() || isLoading}>
-        {isLoading ? "Rejestrowanie..." : "Zarejestruj się"}
+      <Button
+        data-testid="update-password-submit-button"
+        type="submit"
+        className="w-full"
+        disabled={!isFormValid() || isLoading}
+      >
+        {isLoading ? "Aktualizowanie..." : "Zmień hasło"}
       </Button>
     </form>
   );

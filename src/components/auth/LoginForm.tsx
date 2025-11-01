@@ -101,10 +101,11 @@ export function LoginForm() {
     // Sprawdza czy wszystkie pola są wypełnione
     const allFieldsFilled = formData.email.trim() !== "" && formData.password !== "";
 
-    // Sprawdza czy nie ma błędów walidacji
-    const noErrors = !validationErrors.email && !validationErrors.password;
+    // Sprawdza poprawność bezpośrednio (bez ustawiania błędów w stanie)
+    const isEmailValid = !validateEmail(formData.email);
+    const isPasswordValid = !validateLoginPassword(formData.password);
 
-    return allFieldsFilled && noErrors;
+    return allFieldsFilled && isEmailValid && isPasswordValid;
   };
 
   return (
@@ -133,7 +134,12 @@ export function LoginForm() {
 
       {/* Pole hasło */}
       <div className="space-y-2">
-        <Label htmlFor="login-password">Hasło</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="login-password">Hasło</Label>
+          <a href="/auth/reset-password" className="text-sm text-primary hover:underline">
+            Nie pamiętam hasła
+          </a>
+        </div>
         <Input
           data-testid="login-password-input"
           id="login-password"
