@@ -33,6 +33,7 @@ Aby deployment działał poprawnie, należy skonfigurować następujące sekrety
 
 - `SUPABASE_URL` - URL do instancji Supabase
 - `SUPABASE_KEY` - Klucz publiczny (anon key) do Supabase
+- `SUPABASE_SERVICE_ROLE_KEY` - Klucz service role do Supabase (dla operacji admin)
 
 ## Jak uzyskać Cloudflare credentials
 
@@ -58,15 +59,38 @@ Aby deployment działał poprawnie, należy skonfigurować następujące sekrety
 3. Utwórz nowy projekt Pages (jeśli jeszcze nie istnieje)
 4. Nazwa projektu to wartość, którą należy użyć
 
-## Konfiguracja zmiennych środowiskowych w Cloudflare Pages
+## ⚠️ WAŻNE: Konfiguracja zmiennych środowiskowych
 
-Zmienne środowiskowe dla aplikacji (np. `SUPABASE_URL`, `SUPABASE_KEY`) należy również skonfigurować w Cloudflare Pages:
+### Cloudflare Pages wymaga konfiguracji zmiennych w Dashboard
 
-1. Przejdź do projektu w Cloudflare Dashboard
-2. Wybierz **Settings** → **Environment variables**
-3. Dodaj zmienne:
-   - `SUPABASE_URL`
-   - `SUPABASE_KEY`
+W przeciwieństwie do tradycyjnych deploymentów, Cloudflare Pages **nie** używa zmiennych z build time. Zamiast tego:
+
+1. **Zmienne muszą być skonfigurowane w Cloudflare Pages Dashboard**
+2. **Zmienne są dostępne w runtime przez Cloudflare Workers**
+3. **Build może być wykonany bez zmiennych środowiskowych**
+
+### Konfiguracja zmiennych w Cloudflare Pages
+
+1. Zaloguj się do [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. Przejdź do **Workers & Pages**
+3. Wybierz swój projekt
+4. Przejdź do **Settings** → **Environment variables**
+5. Dodaj następujące zmienne dla środowiska **Production**:
+   - `SUPABASE_URL` - URL do instancji Supabase
+   - `SUPABASE_KEY` - Klucz publiczny (anon key) do Supabase
+   - `SUPABASE_SERVICE_ROLE_KEY` - Klucz service role do Supabase
+   - `OPENROUTER_API_KEY` - (opcjonalnie) Klucz API do Openrouter.ai
+   - `OPENROUTER_MODEL` - (opcjonalnie) Model AI do użycia
+
+### Jak Astro + Cloudflare obsługuje zmienne?
+
+Astro z adapterem Cloudflare automatycznie:
+
+- Odczytuje zmienne z Cloudflare Pages environment
+- Udostępnia je przez `import.meta.env` w kodzie server-side
+- **NIE WYMAGA** żadnej specjalnej konfiguracji w `astro.config.mjs`
+
+Workflow GitHub Actions może wykonać build **bez** zmiennych środowiskowych, ponieważ są one dostępne dopiero w runtime na Cloudflare.
 
 ## Struktura wdrożenia
 
