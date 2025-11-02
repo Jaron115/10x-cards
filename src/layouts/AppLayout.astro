@@ -1,6 +1,7 @@
 ---
 import Layout from "./Layout.astro";
 import { Sidebar } from "../components/navigation/Sidebar";
+import { MobileNav } from "../components/navigation/MobileNav";
 
 interface Props {
   title?: string;
@@ -24,11 +25,19 @@ const currentPath = Astro.url.pathname;
 
 <Layout title={title}>
   <div class="min-h-screen flex bg-gray-50">
-    <!-- Sidebar - hidden on mobile, visible on lg+ -->
+    <!-- Mobile header with hamburger menu - visible only on mobile (< lg) -->
+    <div class="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background border-b border-border">
+      <div class="flex items-center gap-3 px-4 py-3">
+        <MobileNav currentPath={currentPath} userEmail={userEmail} client:load />
+        <h1 class="text-lg font-bold text-foreground">10x Cards</h1>
+      </div>
+    </div>
+
+    <!-- Desktop Sidebar - hidden on mobile, visible on lg+ -->
     <Sidebar currentPath={currentPath} userEmail={userEmail} client:load />
 
-    <!-- Main content - full width on mobile, with sidebar space on lg+ -->
-    <main class="flex-1 overflow-y-auto w-full">
+    <!-- Main content - with top padding on mobile for fixed header -->
+    <main class="flex-1 overflow-y-auto w-full pt-16 lg:pt-0">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <slot />
       </div>

@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { SidebarNavItem } from "./SidebarNavItem";
-import type { SidebarProps, NavItem } from "@/types";
+import type { SidebarProps } from "@/types";
 import { useAuth } from "@/components/auth/useAuth";
 import { useAuthStore } from "@/lib/stores/authStore";
+import { navItems } from "./navItems";
 
 /**
  * Komponent nawigacji bocznej dla chronionych widoków
@@ -14,30 +15,6 @@ export const Sidebar = ({ currentPath, userEmail }: SidebarProps) => {
 
   // Use email from auth store if not provided via props
   const displayEmail = userEmail || user?.email;
-
-  // Definicja elementów nawigacyjnych
-  const navItems: NavItem[] = [
-    {
-      label: "Generator AI",
-      href: "/app/generator",
-    },
-    {
-      label: "Moje fiszki",
-      href: "/app/flashcards",
-    },
-    {
-      label: "Dodaj fiszkę",
-      href: "/app/flashcards/new",
-    },
-    {
-      label: "Sesja nauki",
-      href: "/app/study",
-    },
-    {
-      label: "Konto",
-      href: "/app/account",
-    },
-  ];
 
   /**
    * Obsługa wylogowania użytkownika
