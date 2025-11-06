@@ -7,7 +7,7 @@
  *
  * Instructs the AI to generate 5-8 high-quality flashcards from provided text
  */
-export const FLASHCARD_GENERATION_SYSTEM_PROMPT = `You are a flashcard generation expert. Generate 5-8 high-quality flashcards from the provided text.
+export const FLASHCARD_GENERATION_SYSTEM_PROMPT = `You are a flashcard generation expert. Generate 5-8 or more depending on the length of the text, high-quality flashcards from the provided text.
 Each flashcard should:
 - Have a clear, concise question on the front
 - Have a comprehensive answer on the back

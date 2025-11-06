@@ -557,6 +557,48 @@ export interface UpdatePasswordFormErrors {
 }
 
 // ============================================================================
+// Study Session Types
+// ============================================================================
+
+/**
+ * Query parameters for GET /api/study/session
+ */
+export interface GetStudySessionQuery {
+  limit?: number; // Default: 20, min: 1, max: 50
+  source?: FlashcardSource; // Filter by source (optional)
+  shuffle?: boolean; // Default: true
+}
+
+/**
+ * Response for GET /api/study/session
+ */
+export interface GetStudySessionResponse {
+  session_id: string; // UUID v4 generated on server
+  flashcards: FlashcardDTO[]; // Array of flashcards for study
+  total_count: number; // Number of flashcards in this session
+  user_total_flashcards: number; // Total flashcards user owns
+}
+
+/**
+ * Client-side study session state
+ */
+export interface StudySessionState {
+  flashcards: FlashcardDTO[];
+  currentCardIndex: number;
+  isFlipped: boolean;
+  reviewResults: {
+    flashcard_id: number;
+    known: boolean;
+  }[];
+  sessionStats: {
+    total: number;
+    reviewed: number;
+    known: number;
+    unknown: number;
+  };
+}
+
+// ============================================================================
 // Auth API Types
 // ============================================================================
 
