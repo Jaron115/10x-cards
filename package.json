@@ -13,7 +13,7 @@
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:watch": "vitest --watch",
-    "test:ui": "vitest run --ui",
+    "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "dev:e2e": "astro dev --mode test",
     "test:e2e": "playwright test",
